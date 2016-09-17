@@ -9,8 +9,8 @@ import ast
 from Crypto.Cipher import DES3
 from abc import ABCMeta, abstractmethod
 from . import currencies, languages, transactions
-from response import Response
-from request import Request
+from .response import Response
+from .request import Request
 
 
 # Calculated parameters

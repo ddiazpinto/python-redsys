@@ -2,6 +2,7 @@ Usage:
 ------
 
 .. code-block:: python
+
     from decimal import Decimal as D, ROUND_HALF_UP
     from redsys import currencies, languages, parameters, transactions
     from redsys.client import RedirectClient
