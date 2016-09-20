@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-
+import re
 from decimal import Decimal
 from .transactions import TRANSACTION_TYPES
 from .currencies import CURRENCIES
@@ -93,6 +92,10 @@ class Request(object):
 
     def prepare_sum_total(self, value):
         return int(value * 100)
+
+    def check_order(self, value):
+        if re.match(r"[0-9]{4}[a-zA-Z0-9]{5}$", value):
+            raise ValueError("order format is not valid.")
 
     def check_transaction_type(self, value):
         if value not in TRANSACTION_TYPES:

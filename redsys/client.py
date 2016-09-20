@@ -42,7 +42,7 @@ class Client(object):
         pass
 
     @abstractmethod
-    def prepare(self, request):
+    def prepare_request(self, request):
         pass
 
     def encode_parameters(self, parameters):
@@ -80,7 +80,7 @@ class RedirectClient(Client):
             raise ValueError("The provided signature is not valid.")
         return response
 
-    def prepare(self, request):
+    def prepare_request(self, request):
         merchant_parameters = self.encode_parameters(request.prepare_parameters())
         signature = self.sign_hmac256(self.encrypt_3DES(request.order), merchant_parameters)
         return {

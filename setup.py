@@ -1,22 +1,30 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
+import os
+from setuptools import find_packages, setup
 
-from distutils.core import setup
+with open(os.path.join(os.path.dirname(__file__), 'README.rst')) as readme:
+    README = readme.read()
 
-VERSION = '0.1.0'
-PACKAGES = ['redsys', ]
+# allow setup.py to be run from any path
+os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
 
 setup(
     name='redsys',
-    description='A simple client to handle payments through RedSys.',
-    keywords="redsys, payment, sermepa",
-    author='David Díaz',
-    author_email='d.diazp@gmail.com',
+    version='0.2.0',
+    packages=find_packages(),
+    include_package_data=True,
+    license='MIT License',
+    description='A simple, clean and less dependant client for handle payments through RedSys.',
+    long_description=README,
     url='https://github.com/ddiazpinto/python-redsys',
-    version=VERSION,
-    license='MIT',
-    provides=['redsys'],
-    install_requires=[],
-    packages=PACKAGES,
-    scripts=[],
+    author='David D&iacute;az',
+    author_email='d.diazp@gmail.com',
+    classifiers=[
+        'Intended Audience :: Developers',
+        'License :: OSI Approved :: MIT License',
+        'Operating System :: OS Independent',
+        'Programming Language :: Python',
+        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 3.5',
+    ],
 )
