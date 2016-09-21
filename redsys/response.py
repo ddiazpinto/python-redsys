@@ -16,6 +16,7 @@ CARD_COUNTRY = 'Ds_Card_Country'
 CARD_TYPE = 'Ds_Card_Type'
 SECURE_PAYMENT = 'Ds_SecurePayment'
 AUTHORIZATION_CODE = 'Ds_AuthorisationCode'
+ERROR_CODE = 'Ds_ErrorCode'
 
 RESPONSE_MAP = {
     '0000': 'Transacción autorizada para pagos y preautorizaciones',
@@ -74,6 +75,7 @@ MERCHANT_PARAMETERS_MAP = {
     'card_type': CARD_TYPE,
     'secure_payment': SECURE_PAYMENT,
     'authorization_code': AUTHORIZATION_CODE,
+    'error_code': ERROR_CODE,
 }
 
 
@@ -98,23 +100,23 @@ class Response(object):
             self._parameters[key] = value
 
     def is_authorized(self):
-        return (0 <= self.code <= 99) or self.code == 900 or self.code == 400
+        return (0 <= self.response_code <= 99) or self.response_code == 900 or self.response_code == 400
 
     def is_paid(self):
-        return 0 <= self.code <= 99
+        return 0 <= self.response_code <= 99
 
     def is_refunded(self):
-        return self.code == 900
+        return self.response_code == 900
 
     def is_canceled(self):
-        return self.code == 400
+        return self.response_code == 400
 
     @property
-    def code(self):
+    def response_code(self):
         return int(self.response)
 
     @property
-    def message(self):
+    def response_message(self):
         return RESPONSE_MAP['0000'] if self.is_paid() else RESPONSE_MAP[self.response]
 
     def clean_amount(self, value):
