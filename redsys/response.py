@@ -18,7 +18,7 @@ SECURE_PAYMENT = 'Ds_SecurePayment'
 AUTHORIZATION_CODE = 'Ds_AuthorisationCode'
 
 RESPONSE_MAP = {
-    '0': 'Transacción autorizada para pagos y preautorizaciones',
+    '0000': 'Transacción autorizada para pagos y preautorizaciones',
     '900': 'Transacción autorizada para devoluciones y confirmaciones',
     '400': 'Transacción autorizada para anulaciones',
     '101': 'Tarjeta caducada',
@@ -98,20 +98,24 @@ class Response(object):
             self._parameters[key] = value
 
     def is_authorized(self):
-        return (0 <= self.response <= 99) or self.response == 900 or self.response == 400
+        return (0 <= self.code <= 99) or self.code == 900 or self.code == 400
 
     def is_paid(self):
-        return 0 <= self.response <= 99
+        return 0 <= self.code <= 99
 
     def is_refunded(self):
-        return self.response == 900
+        return self.code == 900
 
     def is_canceled(self):
-        return self.response == 400
+        return self.code == 400
+
+    @property
+    def code(self):
+        return int(self.response)
 
     @property
     def message(self):
-        return RESPONSE_MAP['0'] if self.is_paid() else RESPONSE_MAP[str(self.response)]
+        return RESPONSE_MAP['0000'] if self.is_paid() else RESPONSE_MAP[self.response]
 
     def clean_amount(self, value):
         return Decimal("%s.%s" % (str(value)[:-2], str(value)[-2:]))
