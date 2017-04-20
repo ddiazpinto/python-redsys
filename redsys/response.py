@@ -14,6 +14,7 @@ MERCHANT_DATA = 'Ds_MerchantData'
 CONSUMER_LANGUAGE = 'Ds_ConsumerLanguage'
 CARD_COUNTRY = 'Ds_Card_Country'
 CARD_TYPE = 'Ds_Card_Type'
+CARD_BRAND = 'Ds_Card_Brand'
 SECURE_PAYMENT = 'Ds_SecurePayment'
 AUTHORIZATION_CODE = 'Ds_AuthorisationCode'
 ERROR_CODE = 'Ds_ErrorCode'
@@ -73,6 +74,7 @@ MERCHANT_PARAMETERS_MAP = {
     'consumer_language': CONSUMER_LANGUAGE,
     'card_country': CARD_COUNTRY,
     'card_type': CARD_TYPE,
+    'card_brand': CARD_BRAND,
     'secure_payment': SECURE_PAYMENT,
     'authorization_code': AUTHORIZATION_CODE,
     'error_code': ERROR_CODE,
