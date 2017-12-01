@@ -2,21 +2,27 @@
 Welcome to python-redsys!
 =========================
 
-A simple, clean and less dependant client for handle payments through RedSys platform (previously known as Sermepa)
-using the two types of conexion defined by the platform: *direct conexion* (or webservice) and *redirect conexion*.
+A simple, clean and less dependant client to handle payments through RedSys platform
+(previously known as Sermepa) using the two types of connection defined by the platform:
+*direct connection* (or webservice) and *redirect connection* or (secure method).
 
-The aim of this package is to provide a normalized interface between RedSys and other applications.
+The purpose of this library is just provide a normalized interface between RedSys and other applications.
 
-Although RedSys platform's *redirect conexion* depends on a webserver to resolve the communication step,
-the `RedirectClient` provided in this package does not assumes any kind of procedure to resolve this
-communication step; it merely prepares the necessary parameters for making a request and handle the
-response parameters.
+**About `RedirectClient`**
+Although *redirect connection* depends on a webserver to resolve the communication step,
+the `RedirectClient` provided in this library does not assumes any kind of procedure to resolve that
+step; it merely prepares the necessary parameters to make a request and handle the corresponding response parameters.
+That's what less dependant means.
 
-Example using *redirect conexion*
-=================================
+If you are intend to use this library with django, take a look at <https://github.com/ddiazpinto/django-redsys>.
+Django-redsys uses this library and extends it to resolve all the communication step. Unfortunately it is not
+documented at all but if you need some help, let me know submitting an issue.
 
-1. Create the client
---------------------
+Example using *redirect connection*
+===================================
+
+1. Instantiate the redirect client
+----------------------------------
 .. code-block:: python
 
     from decimal import Decimal as D, ROUND_HALF_UP
@@ -34,8 +40,8 @@ Example using *redirect conexion*
 
     request = client.create_request()
 
-3. Pass the necessary parameters to the request
------------------------------------------------
+3. Set up the request parameters
+--------------------------------
 .. code-block:: python
 
     request.merchant_code = u'100000001'
@@ -45,24 +51,32 @@ Example using *redirect conexion*
     request.order = u'000000001'
     # The amount must be defined as decimal and pre-formated with only two decimals
     request.amount = D('10.56489').quantize(D('.01'), ROUND_HALF_UP)
-    request.merchant_data = 'merchant data for tracking purpose'
+    request.merchant_data = 'merchant data for tracking purpose like order_id, session_key, ...'
     request.merchant_name = "Example Commerce"
     request.titular = "Example Ltd."
     request.product_description = "Products of Example Commerce"
     request.merchant_url = "https://example.com/redsys/response"
 
-4. Prepare de request
----------------------
-Returns a dict using the provided request, that can be directly used as post parameters.
+4. Prepare the request
+----------------------
+This method returns a dict with the necessary post parameters that are needed during the communication step.
 
 .. code-block:: python
 
     args = client.prepare_request(request)
 
-5. Create a response and check the response
--------------------------------------------
-The `create_response()` throws an `ValueError` in case that the `signature` does not corresponding
-with the provided `merchant_paramenters`. This normally means that the response *is not comming from RedSys*.
+5. Communication step
+---------------------
+Redirect the *user-agent* to the corresponding RedSys's endpoint using the post parameters given in the previous step.
+
+After the payment process is finish, RedSys will respond making a request to the `merchant_url` defined in the step 3.
+
+6. Create and check the response
+--------------------------------
+Create the response object using the received parameters from RedSys. This `create_response()` method
+throws a ``ValueError`` in case of the received `signature` does not be equal to the calculated one using
+the given merchant_parameters. This normally means that the response **is not comming from RedSys** or that
+**has been compromised**.
 
 .. code-block:: python
 
@@ -71,7 +85,25 @@ with the provided `merchant_paramenters`. This normally means that the response 
     signature_version = "HMAC_SHA256_V1"
     response = client.create_response(signature, merchant_parameters, signature_version)
     if response.is_paid():
-        # Make the corresponding actions after a successful payment
+        # Do the corresponding actions after a successful payment
     else:
-        # Make the corresponding actions after a failed payment
+        # Do the corresponding actions after a failed payment
         raise Exception(response.response, response.message)
+
+**Methods for checking the response:**
+According to the RedSys documentation:
+ - `response.is_paid()`: Returns ``True`` if the response code is between 0 and 99 (both included).
+ - `response.is_canceled()`: Returns ``True`` if the response code is 400.
+ - `response.is_refunded()`: Returns ``True`` if the response code is 900.
+ - `response.is_authorized()`: Returns ``True`` if the response is **paid**, **refunded** or **canceled**.
+
+Also, you can directly access the code or the message defined in RedSys documentation using `response.response_code`
+or `response.response_message`.
+
+Example using *direct connection* or *webservice*
+=================================================
+This connection method is not implemented yet.
+
+Contributions
+=============
+Please, feel free to send any contribution that maintains the *less dependant* philosophy.
