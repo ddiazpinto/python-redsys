@@ -9,6 +9,7 @@ A simple, clean and less dependant client to handle payments through RedSys plat
 The purpose of this library is just provide a normalized interface between RedSys and other applications.
 
 **About `RedirectClient`**
+
 Although *redirect connection* depends on a webserver to resolve the communication step,
 the `RedirectClient` provided in this library does not assumes any kind of procedure to resolve that
 step; it merely prepares the necessary parameters to make a request and handle the corresponding response parameters.
@@ -73,7 +74,7 @@ After the payment process is finish, RedSys will respond making a request to the
 
 6. Create and check the response
 --------------------------------
-Create the response object using the received parameters from RedSys. This `create_response()` method
+Create the response object using the received parameters from RedSys. The method `create_response()`
 throws a ``ValueError`` in case of the received `signature` does not be equal to the calculated one using
 the given merchant_parameters. This normally means that the response **is not comming from RedSys** or that
 **has been compromised**.
@@ -91,6 +92,7 @@ the given merchant_parameters. This normally means that the response **is not co
         raise Exception(response.response, response.message)
 
 **Methods for checking the response:**
+
 According to the RedSys documentation:
  - `response.is_paid()`: Returns ``True`` if the response code is between 0 and 99 (both included).
  - `response.is_canceled()`: Returns ``True`` if the response code is 400.
