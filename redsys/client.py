@@ -51,7 +51,7 @@ class Client(object):
         return json.loads(base64.b64decode(parameters).decode('utf-8'))
 
     def encrypt_3DES(self, order):
-        pycrypto = DES3.new(base64.b64decode(self.secret_key), DES3.MODE_CBC, IV=b'\0\0\0\0\0\0\0\0')
+        pycrypto = DES3.new(base64.b64decode(self.secret_key).encode('utf-8'), DES3.MODE_CBC, IV=b'\0\0\0\0\0\0\0\0'.encode('utf-8'))
         if (sys.version_info > (3,0)):
             order_padded = order.ljust(16, u'\x00')
         else:
