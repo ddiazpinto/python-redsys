@@ -51,13 +51,13 @@ class Client(object):
         return json.loads(base64.b64decode(parameters).decode('utf-8'))
 
     def encrypt_3DES(self, order):
-        pycrypto = DES3.new(base64.b64decode(self.secret_key).encode('utf-8'), DES3.MODE_CBC, IV=b'\0\0\0\0\0\0\0\0'.encode('utf-8'))
+        pycrypto = DES3.new(base64.b64decode(self.secret_key), DES3.MODE_CBC, IV=b'\0\0\0\0\0\0\0\0')
         if (sys.version_info > (3,0)):
             order_padded = order.ljust(16, u'\x00')
         else:
             order_padded = order.ljust(16, b'\0')
 
-        return pycrypto.encrypt(order_padded)
+        return pycrypto.encrypt(order_padded.encode('utf-8'))
 
     def sign_hmac256(self, encrypted_order, merchant_parameters):
         signature = hmac.new(encrypted_order, merchant_parameters, hashlib.sha256).digest()
