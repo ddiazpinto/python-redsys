@@ -5,7 +5,6 @@ RESPONSE = 'Ds_Response'
 DATE = 'Ds_Date'
 HOUR = 'Ds_Hour'
 MERCHANT_CODE = 'Ds_MerchantCode'
-MERCHANT_MERCHANTCODE = 'Ds_Merchant_MerchantCode'
 TERMINAL = 'Ds_Terminal'
 TRANSACTION_TYPE = 'Ds_TransactionType'
 ORDER = 'Ds_Order'
@@ -66,7 +65,6 @@ MERCHANT_PARAMETERS_MAP = {
     'date': DATE,
     'hour': HOUR,
     'merchant_code': MERCHANT_CODE,
-    'merchant_merchantcode': MERCHANT_MERCHANTCODE,
     'terminal': TERMINAL,
     'transaction_type': TRANSACTION_TYPE,
     'order': ORDER,
