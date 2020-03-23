@@ -3,6 +3,7 @@ from decimal import Decimal
 from .transactions import TRANSACTION_TYPES
 from .currencies import CURRENCIES
 from .languages import LANGUAGES
+from .cof import COF_FIRST_BOOLEAN, COF_TYPES
 
 # General parameters
 MERCHANT_CODE = 'Ds_Merchant_MerchantCode'
@@ -36,6 +37,11 @@ PAN = 'Ds_Merchant_Pan'
 EXPIRY_DATE = 'Ds_Merchant_ExpiryDate'
 CVV2 = 'Ds_Merchant_Cvv2'
 
+# Credential-On-File
+COF_INI = 'Ds_Merchant_Cof_Ini'
+COF_TYPE = 'Ds_Merchant_Cof_Type'
+COF_TXNID = 'Ds_Merchant_Cof_Txnid'
+
 MERCHANT_PARAMETERS_MAP = {
     'merchant_code': MERCHANT_CODE,
     'terminal': TERMINAL,
@@ -58,7 +64,10 @@ MERCHANT_PARAMETERS_MAP = {
     'consumer_language': CONSUMER_LANGUAGE,
     'pan': PAN,
     'expiry_date': EXPIRY_DATE,
-    'cvv2': CVV2
+    'cvv2': CVV2,
+    'cof_ini': COF_INI,
+    'cof_type': COF_TYPE,
+    'cof_txnid': COF_TXNID
 }
 
 
@@ -132,3 +141,15 @@ class Request(object):
     def check_consumer_language(self, value):
         if value not in LANGUAGES:
             raise ValueError("consumer_language is not valid.")
+
+    def check_cof_ini(self, value):
+        if value not in COF_FIRST_BOOLEAN:
+            raise ValueError("cof_ini is not valid.")
+
+    def check_cof_type(self, value):
+        if value not in COF_TYPES:
+            raise ValueError("cof_type is not valid.")
+
+    def check_cof_txnid(self, value):
+        if len(value) > 15:
+            raise ValueError("cof_txnid is bigger than 15 characters.")
