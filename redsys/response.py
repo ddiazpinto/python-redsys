@@ -19,6 +19,7 @@ MERCHANT_COF_TXNID = 'Ds_Merchant_Cof_Txnid'
 SECURE_PAYMENT = 'Ds_SecurePayment'
 AUTHORIZATION_CODE = 'Ds_AuthorisationCode'
 ERROR_CODE = 'Ds_ErrorCode'
+PROCESSED_PAY_METHOD = 'Ds_ProcessedPayMethod'
 
 RESPONSE_MAP = {
     '0000': 'Transacción autorizada para pagos y preautorizaciones',
@@ -80,6 +81,7 @@ MERCHANT_PARAMETERS_MAP = {
     'secure_payment': SECURE_PAYMENT,
     'authorization_code': AUTHORIZATION_CODE,
     'error_code': ERROR_CODE,
+    'processed_pay_method': PROCESSED_PAY_METHOD
 }
 
 
