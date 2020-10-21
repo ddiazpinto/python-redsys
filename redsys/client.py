@@ -57,7 +57,7 @@ class Client(object):
         else:
             order_padded = order.ljust(16, b'\0')
 
-        return pycrypto.encrypt(order_padded)
+        return pycrypto.encrypt(order_padded.encode('utf-8'))
 
     def sign_hmac256(self, encrypted_order, merchant_parameters):
         signature = hmac.new(encrypted_order, merchant_parameters, hashlib.sha256).digest()
