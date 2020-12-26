@@ -1,3 +1,6 @@
+
+[![PyPI version](https://badge.fury.io/py/python-redsys.svg)](https://badge.fury.io/py/python-redsys)
+
 # Welcome to python-redsys!
 
 A simple, clean and less dependant client to handle payments through the
@@ -16,11 +19,19 @@ response parameters. That's what less dependant means.
 
 ## Example using _redirect connection_
 
+### 0. Install python-redsys
+
+You can add python-redsys to your project with pip:
+> pip install python-redsys
+
+Or with poetry:
+> poetry add python-redsys
+
 ### 1. Instantiate the redirect client
 
-```{.sourceCode .python}
+```python
 from decimal import Decimal as D, ROUND_HALF_UP
-from redsys import currencies, languages, parameters, transactions
+from redsys import transactions
 from redsys.client import RedirectClient
 
 secret_key = "123456789abcdef"
@@ -30,7 +41,7 @@ client = RedirectClient(secret_key, sandbox)
 
 ### 2. Create a request
 
-```{.sourceCode .python}
+```python
 request = client.create_request()
 ```
 
