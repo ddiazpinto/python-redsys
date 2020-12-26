@@ -1,64 +1,65 @@
 import re
 from decimal import Decimal
-from .transactions import TRANSACTION_TYPES
+
 from .currencies import CURRENCIES
 from .languages import LANGUAGES
+from .transactions import TRANSACTION_TYPES
 
 # General parameters
-MERCHANT_CODE = 'Ds_Merchant_MerchantCode'
-TERMINAL = 'Ds_Merchant_Terminal'
-TRANSACTION_TYPE = 'Ds_Merchant_TransactionType'
-ORDER = 'Ds_Merchant_Order'
-CURRENCY = 'Ds_Merchant_Currency'
-AMOUNT = 'Ds_Merchant_Amount'
+MERCHANT_CODE = "Ds_Merchant_MerchantCode"
+TERMINAL = "Ds_Merchant_Terminal"
+TRANSACTION_TYPE = "Ds_Merchant_TransactionType"
+ORDER = "Ds_Merchant_Order"
+CURRENCY = "Ds_Merchant_Currency"
+AMOUNT = "Ds_Merchant_Amount"
 
 # Recurring transaction parameters
-SUM_TOTAL = 'Ds_Merchant_SumTotal'
-DATE_FREQUENCY = 'Ds_Merchant_DateFrecuency'
-CHARGE_EXPIRY_DATE = 'Ds_Merchant_ChargeExpiryDate'
-TRANSACTION_DATE = 'Ds_Merchant_TransactionDate'
-AUTHORIZATION_CODE = 'Ds_Merchant_AuthorisationCode'
+SUM_TOTAL = "Ds_Merchant_SumTotal"
+DATE_FREQUENCY = "Ds_Merchant_DateFrecuency"
+CHARGE_EXPIRY_DATE = "Ds_Merchant_ChargeExpiryDate"
+TRANSACTION_DATE = "Ds_Merchant_TransactionDate"
+AUTHORIZATION_CODE = "Ds_Merchant_AuthorisationCode"
 
 # Not required parameters
-MERCHANT_DATA = 'Ds_Merchant_MerchantData'
+MERCHANT_DATA = "Ds_Merchant_MerchantData"
 
 # Redirect client paramenters
-MERCHANT_NAME = 'Ds_Merchant_MerchantName'
-PRODUCT_DESCRIPTION = 'Ds_Merchant_ProductDescription'
-TITULAR = 'Ds_Merchant_Titular'
-MERCHANT_URL = 'Ds_Merchant_MerchantURL'
-URL_OK = 'Ds_Merchant_UrlOK'
-URL_KO = 'Ds_Merchant_UrlKO'
-CONSUMER_LANGUAGE = 'Ds_Merchant_ConsumerLanguage'
+MERCHANT_NAME = "Ds_Merchant_MerchantName"
+PRODUCT_DESCRIPTION = "Ds_Merchant_ProductDescription"
+TITULAR = "Ds_Merchant_Titular"
+MERCHANT_URL = "Ds_Merchant_MerchantURL"
+URL_OK = "Ds_Merchant_UrlOK"
+URL_KO = "Ds_Merchant_UrlKO"
+CONSUMER_LANGUAGE = "Ds_Merchant_ConsumerLanguage"
 
 # Credit card data parameters
-PAN = 'Ds_Merchant_Pan'
-EXPIRY_DATE = 'Ds_Merchant_ExpiryDate'
-CVV2 = 'Ds_Merchant_Cvv2'
+PAN = "Ds_Merchant_Pan"
+EXPIRY_DATE = "Ds_Merchant_ExpiryDate"
+CVV2 = "Ds_Merchant_Cvv2"
 
 MERCHANT_PARAMETERS_MAP = {
-    'merchant_code': MERCHANT_CODE,
-    'terminal': TERMINAL,
-    'transaction_type': TRANSACTION_TYPE,
-    'order': ORDER,
-    'currency': CURRENCY,
-    'amount': AMOUNT,
-    'sum_total': SUM_TOTAL,
-    'date_frequency': DATE_FREQUENCY,
-    'charge_expiry_date': CHARGE_EXPIRY_DATE,
-    'transaction_date': TRANSACTION_DATE,
-    'authorization_code': AUTHORIZATION_CODE,
-    'merchant_data': MERCHANT_DATA,
-    'merchant_name': MERCHANT_NAME,
-    'product_description': PRODUCT_DESCRIPTION,
-    'titular': TITULAR,
-    'merchant_url': MERCHANT_URL,
-    'url_ok': URL_OK,
-    'url_ko': URL_KO,
-    'consumer_language': CONSUMER_LANGUAGE,
-    'pan': PAN,
-    'expiry_date': EXPIRY_DATE,
-    'cvv2': CVV2
+    "merchant_code": MERCHANT_CODE,
+    "terminal": TERMINAL,
+    "transaction_type": TRANSACTION_TYPE,
+    "order": ORDER,
+    "currency": CURRENCY,
+    "amount": AMOUNT,
+    "sum_total": SUM_TOTAL,
+    "date_frequency": DATE_FREQUENCY,
+    "charge_expiry_date": CHARGE_EXPIRY_DATE,
+    "transaction_date": TRANSACTION_DATE,
+    "authorization_code": AUTHORIZATION_CODE,
+    "merchant_data": MERCHANT_DATA,
+    "merchant_name": MERCHANT_NAME,
+    "product_description": PRODUCT_DESCRIPTION,
+    "titular": TITULAR,
+    "merchant_url": MERCHANT_URL,
+    "url_ok": URL_OK,
+    "url_ko": URL_KO,
+    "consumer_language": CONSUMER_LANGUAGE,
+    "pan": PAN,
+    "expiry_date": EXPIRY_DATE,
+    "cvv2": CVV2,
 }
 
 
@@ -67,6 +68,7 @@ class Request(object):
     Defines an atomic request with all the required parameters and sanitize
     their values according to the platform specifications
     """
+
     _parameters = {}
 
     def __getattr__(self, item):
@@ -84,7 +86,9 @@ class Request(object):
         parameters = {}
         for key, value in self._parameters.items():
             prepare = getattr(self, "prepare_%s" % key, None)
-            parameters[MERCHANT_PARAMETERS_MAP[key]] = prepare(value) if prepare else value
+            parameters[MERCHANT_PARAMETERS_MAP[key]] = (
+                prepare(value) if prepare else value
+            )
         return parameters
 
     def prepare_amount(self, value):
