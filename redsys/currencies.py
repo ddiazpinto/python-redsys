@@ -45,20 +45,4 @@ VEF = 937
 """ Turkish lira """
 TRY = 949
 
-CURRENCIES = [
-    EUR,
-    USD,
-    GBP,
-    JPY,
-    ARS,
-    CAD,
-    CLP,
-    COP,
-    INR,
-    MXN,
-    PEN,
-    CHF,
-    BRL,
-    VEF,
-    TRY
-]
+CURRENCIES = [EUR, USD, GBP, JPY, ARS, CAD, CLP, COP, INR, MXN, PEN, CHF, BRL, VEF, TRY]
