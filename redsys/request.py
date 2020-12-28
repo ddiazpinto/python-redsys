@@ -20,7 +20,7 @@ CHARGE_EXPIRY_DATE = "Ds_Merchant_ChargeExpiryDate"
 TRANSACTION_DATE = "Ds_Merchant_TransactionDate"
 AUTHORIZATION_CODE = "Ds_Merchant_AuthorisationCode"
 
-# Not required parameters
+# Optional parameters
 MERCHANT_DATA = "Ds_Merchant_MerchantData"
 
 # Redirect client paramenters

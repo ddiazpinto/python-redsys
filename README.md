@@ -31,7 +31,7 @@ Or with poetry:
 
 ```python
 from decimal import Decimal as D, ROUND_HALF_UP
-from redsys import transactions
+from redsys import transactions, currencies
 from redsys.client import RedirectClient
 
 secret_key = "123456789abcdef"
@@ -90,8 +90,7 @@ not coming from Redsys** or that it **has been compromised**.
 ```python
 signature = "YqFenHc2HpB273l8c995...."
 merchant_parameters = "AndvIh66VZdkC5TG3nYL5j4XfCnFFbo3VkOu9TAeTs58fxddgc..."
-signature_version = "HMAC_SHA256_V1"
-response = client.create_response(signature, merchant_parameters, signature_version)
+response = client.create_response(signature, merchant_parameters)
 if response.is_paid():
     # Do the corresponding actions after a successful payment
 else:

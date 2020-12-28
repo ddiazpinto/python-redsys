@@ -4,7 +4,6 @@ import hashlib
 import hmac
 import json
 import re
-import sys
 from abc import ABCMeta, abstractmethod
 
 from Crypto.Cipher import DES3
@@ -22,9 +21,8 @@ DEFAULT_SIGNATURE_VERSION = "HMAC_SHA256_V1"
 class Client(object):
     __metaclass__ = ABCMeta
 
-    def __init__(self, secret_key=None, sandbox=False):
+    def __init__(self, secret_key=None):
         self.secret_key = secret_key
-        self.endpoint = self.TEST_ENDPOINT if sandbox else self.REAL_ENDPOINT
 
     def create_request(self):
         return Request()
@@ -33,30 +31,34 @@ class Client(object):
     def create_response(
         self, signature, parameters, signature_version=DEFAULT_SIGNATURE_VERSION
     ):
-        raise NotImplemented
+        raise NotImplementedError
 
     @abstractmethod
     def prepare_request(self, request):
-        raise NotImplemented
+        raise NotImplementedError
 
     def encode_parameters(self, parameters):
-        return base64.b64encode(json.dumps(parameters).encode("utf-8"))
+        """Encodes the merchant parameters in base64"""
+        return base64.b64encode(json.dumps(parameters).encode())
 
     def decode_parameters(self, parameters):
-        return json.loads(base64.b64decode(parameters).decode("utf-8"))
+        """Decodes the merchant parameters from base64"""
+        return json.loads(base64.b64decode(parameters).decode())
 
     def encrypt_3DES(self, order):
+        """Encrypts(3DES algorithm) the payment order using the secret key"""
         pycrypto = DES3.new(
             base64.b64decode(self.secret_key), DES3.MODE_CBC, IV=b"\0\0\0\0\0\0\0\0"
         )
-        if sys.version_info > (3, 0):
-            order_padded = order.ljust(16, u"\x00")
-        else:
-            order_padded = order.ljust(16, b"\0")
+        order_padded = order.ljust(16, "\x00")
 
         return pycrypto.encrypt(order_padded)
 
     def sign_hmac256(self, encrypted_order, merchant_parameters):
+        """
+        Generates the encrypted signature using the enctypted order
+        and merchant parameters
+        """
         signature = hmac.new(
             encrypted_order, merchant_parameters, hashlib.sha256
         ).digest()
@@ -67,32 +69,40 @@ class Client(object):
 
 
 class RedirectClient(Client):
-    def create_response(
-        self,
-        signature,
-        merchant_parameters,
-        signature_version=DEFAULT_SIGNATURE_VERSION,
-    ):
-        response = Response(self.decode_parameters(merchant_parameters))
-        calculated_signature = self.generate_signature(
-            response.order, merchant_parameters.encode("utf-8")
-        )
-        alphanum = re.compile("[^a-zA-Z0-9]")
-        safe_signature = re.sub(alphanum, "", signature)
-        safe_calculated_signature = re.sub(
-            alphanum, "", calculated_signature.decode("utf-8")
-        )
-        if safe_signature != safe_calculated_signature:
-            raise ValueError("The provided signature is not valid.")
-        return response
-
     def prepare_request(self, request):
+        """Takes the merchant parameters and returns the necessary parameters
+        to make the POST request to Redsys"""
         merchant_parameters = self.encode_parameters(request.prepare_parameters())
-        signature = self.sign_hmac256(
-            self.encrypt_3DES(request.order), merchant_parameters
-        )
+        signature = self.generate_signature(request.order, merchant_parameters)
         return {
             SIGNATURE_VERSION: DEFAULT_SIGNATURE_VERSION,
             MERCHANT_PARAMETERS: merchant_parameters,
             SIGNATURE: signature,
         }
+
+    def create_response(
+        self,
+        signature,
+        merchant_parameters,
+    ):
+        """
+        Decodes the Redsys response to check for validity.
+        Checks if the received signature corresponds to the sent signature.
+
+        Both the signature and merchant parameters are plain strings, not bytes.
+        """
+        decoded_parameters = self.decode_parameters(merchant_parameters)
+        response = Response(decoded_parameters)
+        calculated_signature = self.generate_signature(
+            response.order, merchant_parameters.encode()
+        )
+        # Remove any non-alphanumeric characters from the signature
+        not_alphanumeric = re.compile("[^a-zA-Z0-9]")
+        safe_signature = re.sub(not_alphanumeric, "", signature)
+
+        safe_calculated_signature = re.sub(
+            not_alphanumeric, "", calculated_signature.decode()
+        )
+        if safe_signature != safe_calculated_signature:
+            raise ValueError("The provided signature is not valid.")
+        return response
