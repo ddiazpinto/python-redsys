@@ -1,9 +1,9 @@
 import re
 from decimal import Decimal
 
-from .currencies import CURRENCIES
-from .languages import LANGUAGES
-from .transactions import TRANSACTION_TYPES
+from redsys.constants.currencies import CURRENCIES
+from redsys.constants.languages import LANGUAGES
+from redsys.constants.transactions import TRANSACTION_TYPES
 
 # General parameters
 MERCHANT_CODE = "Ds_Merchant_MerchantCode"

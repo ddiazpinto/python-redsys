@@ -1,12 +1,10 @@
-import base64
-import json
 from decimal import ROUND_HALF_UP
 from decimal import Decimal as D
 
 import pytest
 
-from redsys import currencies, transactions
 from redsys.client import Client, RedirectClient
+from redsys.constants import currencies, transactions
 
 
 class TestClient:
@@ -113,6 +111,4 @@ class TestRedirectClient:
         encoded_params = self.client.encode_parameters(merchant_parameters)
         bad_signature = b"sadfe2r3q2fdssaf3"
         with pytest.raises(ValueError, match="The provided signature is not valid"):
-            response = self.client.create_response(
-                bad_signature.decode(), encoded_params.decode()
-            )
+            self.client.create_response(bad_signature.decode(), encoded_params.decode())

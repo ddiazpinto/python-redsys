@@ -8,8 +8,8 @@ from abc import ABCMeta, abstractmethod
 
 from Crypto.Cipher import DES3
 
-from .request import Request
-from .response import Response
+from redsys.request import Request
+from redsys.response import Response
 
 # Calculated parameters
 SIGNATURE_VERSION = "Ds_SignatureVersion"
@@ -57,7 +57,7 @@ class Client(object):
 
     def sign_hmac256(self, encrypted_order, merchant_parameters):
         """
-        Generates the encrypted signature using the enctypted order
+        Generates the encrypted signature using the encrypted order
         and merchant parameters
         """
         signature = hmac.new(
