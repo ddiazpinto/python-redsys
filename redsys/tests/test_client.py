@@ -4,7 +4,7 @@ from decimal import Decimal as D
 import pytest
 
 from redsys.client import Client, RedirectClient
-from redsys.constants import currencies, transactions
+from redsys.constants import EUR, STANDARD_PAYMENT
 
 
 class TestClient:
@@ -15,8 +15,8 @@ class TestClient:
         request = self.client.create_request()
         request.merchant_code = "100000001"
         request.terminal = "1"
-        request.transaction_type = transactions.STANDARD_PAYMENT
-        request.currency = currencies.EUR
+        request.transaction_type = STANDARD_PAYMENT
+        request.currency = EUR
         request.order = "000000001"
         request.amount = D("10.56489").quantize(D(".01"), ROUND_HALF_UP)
         request.merchant_data = "test merchant data"
@@ -61,8 +61,8 @@ class TestRedirectClient:
         request = self.client.create_request()
         request.merchant_code = "100000001"
         request.terminal = "1"
-        request.transaction_type = transactions.STANDARD_PAYMENT
-        request.currency = currencies.EUR
+        request.transaction_type = STANDARD_PAYMENT
+        request.currency = EUR
         request.order = "000000001"
         request.amount = D("10.56489").quantize(D(".01"), ROUND_HALF_UP)
         request.merchant_data = "test merchant data"

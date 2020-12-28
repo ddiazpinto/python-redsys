@@ -1,9 +1,7 @@
 import re
 from decimal import Decimal
 
-from redsys.constants.currencies import CURRENCIES
-from redsys.constants.languages import LANGUAGES
-from redsys.constants.transactions import TRANSACTION_TYPES
+from redsys.constants import CURRENCIES, LANGUAGES, TRANSACTIONS
 
 # General parameters
 MERCHANT_CODE = "Ds_Merchant_MerchantCode"
@@ -102,7 +100,7 @@ class Request(object):
             raise ValueError("order format is not valid.")
 
     def check_transaction_type(self, value):
-        if value not in TRANSACTION_TYPES:
+        if value not in TRANSACTIONS:
             raise ValueError("transaction_type is not valid.")
 
     def check_currency(self, value):
