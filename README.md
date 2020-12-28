@@ -31,12 +31,11 @@ Or with poetry:
 
 ```python
 from decimal import Decimal as D, ROUND_HALF_UP
-from redsys import transactions, currencies
+from redsys.constants import EUR, STANDARD_PAYMENT
 from redsys.client import RedirectClient
 
 secret_key = "123456789abcdef"
-sandbox = False
-client = RedirectClient(secret_key, sandbox)
+client = RedirectClient(secret_key)
 ```
 
 ### 2. Create a request
@@ -50,8 +49,8 @@ request = client.create_request()
 ```python
 request.merchant_code = "100000001"
 request.terminal = "1"
-request.transaction_type = transactions.STANDARD_PAYMENT
-request.currency = currencies.EUR
+request.transaction_type = STANDARD_PAYMENT
+request.currency = EUR
 request.order = "000000001"
 # The amount must be defined as decimal and pre-formatted with only two decimals
 request.amount = D("10.56489").quantize(D(".01"), ROUND_HALF_UP)
@@ -73,10 +72,10 @@ args = client.prepare_request(request)
 
 ### 5. Communication step
 
-Redirect the _user-agent_ to the corresponding RedSys's endpoint using
+Redirect the _user-agent_ to the corresponding Redsys's endpoint using
 the post parameters given in the previous step.
 
-After the payment process is finish, RedSys will respond making a
+After the payment process is finish, Redsys will respond making a
 request to the `merchant_url` defined in step 3.
 
 ### 6. Create and check the response
@@ -100,7 +99,7 @@ else:
 
 **Methods for checking the response:**
 
-According to the RedSys documentation:
+According to the Redsys documentation:
 
 - `response.is_paid()`: Returns `True` if the response code is
   between 0 and 99 (both included).
