@@ -47,12 +47,13 @@ class Client(object):
 
     def encrypt_3DES(self, order):
         """Encrypts(3DES algorithm) the payment order using the secret key"""
-        pycrypto = DES3.new(
+        cipher = DES3.new(
             base64.b64decode(self.secret_key), DES3.MODE_CBC, IV=b"\0\0\0\0\0\0\0\0"
         )
-        order_padded = order.ljust(16, "\x00")
-
-        return pycrypto.encrypt(order_padded)
+        # the cipher needs to be passed 16 bytes,
+        # so "order" must be 16 bytes long,
+        # therefore we left-justify adding ceros
+        return cipher.encrypt(order.encode().ljust(16, b"\0"))
 
     def sign_hmac256(self, encrypted_order, merchant_parameters):
         """
