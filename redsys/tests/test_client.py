@@ -5,6 +5,7 @@ import pytest
 
 from redsys.client import Client, RedirectClient
 from redsys.constants import EUR, STANDARD_PAYMENT
+from redsys.request import Request
 
 
 class TestClient:
@@ -12,20 +13,21 @@ class TestClient:
     def set_up(self):
         secret_key = "sq7HjrUOBfKmC576ILgskD5srU870gJ7"
         self.client = Client(secret_key)
-        request = self.client.create_request()
-        request.merchant_code = "100000001"
-        request.terminal = "1"
-        request.transaction_type = STANDARD_PAYMENT
-        request.currency = EUR
-        request.order = "000000001"
-        request.amount = D("10.56489").quantize(D(".01"), ROUND_HALF_UP)
-        request.merchant_data = "test merchant data"
-        request.merchant_name = "Example Commerce"
-        request.titular = "Example Ltd."
-        request.product_description = "Products of Example Commerce"
-        request.merchant_url = "https://example.com/redsys/response"
-        self.request = request
-        self.merchant_params = request.prepare_parameters()
+        parameters = {
+            "merchant_code": "100000001",
+            "terminal": "1",
+            "transaction_type": STANDARD_PAYMENT,
+            "currency": EUR,
+            "order": "000000001",
+            "amount": D("10.56489").quantize(D(".01"), ROUND_HALF_UP),
+            "merchant_data": "test merchant data",
+            "merchant_name": "Example Commerce",
+            "titular": "Example Ltd.",
+            "product_description": "Products of Example Commerce",
+            "merchant_url": "https://example.com/redsys/response",
+        }
+        self.request = Request(parameters)
+        self.merchant_params = self.request.prepare_parameters()
 
     def test_encode_parameters(self):
         encoded_params = self.client.encode_parameters(self.merchant_params)
@@ -58,22 +60,23 @@ class TestRedirectClient:
     def set_up(self):
         secret_key = "sq7HjrUOBfKmC576ILgskD5srU870gJ7"
         self.client = RedirectClient(secret_key)
-        request = self.client.create_request()
-        request.merchant_code = "100000001"
-        request.terminal = "1"
-        request.transaction_type = STANDARD_PAYMENT
-        request.currency = EUR
-        request.order = "000000001"
-        request.amount = D("10.56489").quantize(D(".01"), ROUND_HALF_UP)
-        request.merchant_data = "test merchant data"
-        request.merchant_name = "Example Commerce"
-        request.titular = "Example Ltd."
-        request.product_description = "Products of Example Commerce"
-        request.merchant_url = "https://example.com/redsys/response"
-        self.request = request
+        self.parameters = {
+            "merchant_code": "100000001",
+            "terminal": "1",
+            "transaction_type": STANDARD_PAYMENT,
+            "currency": EUR,
+            "order": "000000001",
+            "amount": D("10.56489").quantize(D(".01"), ROUND_HALF_UP),
+            "merchant_data": "test merchant data",
+            "merchant_name": "Example Commerce",
+            "titular": "Example Ltd.",
+            "product_description": "Products of Example Commerce",
+            "merchant_url": "https://example.com/redsys/response",
+        }
+        self.request = Request(self.parameters)
 
     def test_prepare_request(self):
-        prepared_request = self.client.prepare_request(self.request)
+        prepared_request = self.client.prepare_request(self.parameters)
         assert len(prepared_request.keys()) == 3
         assert (
             prepared_request.get("Ds_Signature")

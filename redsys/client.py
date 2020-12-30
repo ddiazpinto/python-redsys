@@ -24,9 +24,6 @@ class Client(object):
     def __init__(self, secret_key=None):
         self.secret_key = secret_key
 
-    def create_request(self):
-        return Request()
-
     @abstractmethod
     def create_response(
         self, signature, parameters, signature_version=DEFAULT_SIGNATURE_VERSION
@@ -70,9 +67,10 @@ class Client(object):
 
 
 class RedirectClient(Client):
-    def prepare_request(self, request):
+    def prepare_request(self, parameters):
         """Takes the merchant parameters and returns the necessary parameters
         to make the POST request to Redsys"""
+        request = Request(parameters)
         merchant_parameters = self.encode_parameters(request.prepare_parameters())
         signature = self.generate_signature(request.order, merchant_parameters)
         return {

@@ -1,5 +1,6 @@
 import re
 from decimal import Decimal
+from typing import Dict
 
 from redsys.constants import CURRENCIES, LANGUAGES, TRANSACTIONS
 
@@ -61,7 +62,7 @@ MERCHANT_PARAMETERS_MAP = {
 }
 
 
-class Request(object):
+class Request:
     """
     Defines an atomic request with all the required parameters and sanitize
     their values according to the platform specifications
@@ -69,18 +70,21 @@ class Request(object):
 
     _parameters = {}
 
-    def __getattr__(self, item):
+    def __init__(self, parameters: Dict[str, str]) -> None:
+        for key in parameters.keys():
+            if key in MERCHANT_PARAMETERS_MAP:
+                check = getattr(self, "check_%s" % key, None)
+                if check:
+                    check(parameters[key])
+                self._parameters[key] = parameters[key]
+            else:
+                raise ValueError(f"Unknown parameter {key}")
+
+    def __getattr__(self, item: str) -> str:
         if item in MERCHANT_PARAMETERS_MAP:
             return self._parameters[item]
 
-    def __setattr__(self, key, value):
-        if key in MERCHANT_PARAMETERS_MAP:
-            check = getattr(self, "check_%s" % key, None)
-            if check:
-                check(value)
-            self._parameters[key] = value
-
-    def prepare_parameters(self):
+    def prepare_parameters(self) -> Dict[str, str]:
         parameters = {}
         for key, value in self._parameters.items():
             prepare = getattr(self, "prepare_%s" % key, None)
@@ -89,48 +93,60 @@ class Request(object):
             )
         return parameters
 
-    def prepare_amount(self, value):
+    @staticmethod
+    def prepare_amount(value):
         return int(value * 100)
 
-    def prepare_sum_total(self, value):
+    @staticmethod
+    def prepare_sum_total(value):
         return int(value * 100)
 
-    def check_order(self, value):
+    @staticmethod
+    def check_order(value):
         if not re.match(r"[0-9]{4}[a-zA-Z0-9]{5}$", value):
             raise ValueError("order format is not valid.")
 
-    def check_transaction_type(self, value):
+    @staticmethod
+    def check_transaction_type(value):
         if value not in TRANSACTIONS:
             raise ValueError("transaction_type is not valid.")
 
-    def check_currency(self, value):
+    @staticmethod
+    def check_currency(value):
         if value not in CURRENCIES:
             raise ValueError("currency is not valid.")
 
-    def check_amount(self, value):
+    @staticmethod
+    def check_amount(value):
         if not isinstance(value, Decimal):
             raise TypeError("amount must be defined as decimal.Decimal.")
 
-    def check_sum_total(self, value):
+    @staticmethod
+    def check_sum_total(value):
         if type(value) is not Decimal:
             raise TypeError("sum_total must be defined as decimal.Decimal.")
 
-    def check_merchant_data(self, value):
+    @staticmethod
+    def check_merchant_data(value):
         if len(value) > 1024:
             raise ValueError("merchant_data is bigger than 1024 characters.")
 
-    def check_merchant_url(self, value):
+    @staticmethod
+    def check_merchant_url(value):
         if len(value) > 250:
             raise ValueError("merchant_url is bigger than 250 characters.")
 
-    def check_url_ok(self, value):
+    @staticmethod
+    def check_url_ok(value):
         if len(value) > 250:
             raise ValueError("url_ok is bigger than 250 characters.")
 
-    def check_url_ko(self, value):
+    @staticmethod
+    def check_url_ko(value):
         if len(value) > 250:
             raise ValueError("url_ko is bigger than 250 characters.")
 
-    def check_consumer_language(self, value):
+    @staticmethod
+    def check_consumer_language(value):
         if value not in LANGUAGES:
             raise ValueError("consumer_language is not valid.")
