@@ -38,47 +38,42 @@ secret_key = "123456789abcdef"
 client = RedirectClient(secret_key)
 ```
 
-### 2. Create a request
+### 2. Set up the request parameters
 
 ```python
-request = client.create_request()
+parameters = {
+  "merchant_code": "100000001",
+  "terminal": "1",
+  "transaction_type": STANDARD_PAYMENT,
+  "currency": EUR,
+  "order": "000000001",
+  "amount": D("10.56489").quantize(D(".01"), ROUND_HALF_UP),
+  "merchant_data": "test merchant data",
+  "merchant_name": "Example Commerce",
+  "titular": "Example Ltd.",
+  "product_description": "Products of Example Commerce",
+  "merchant_url": "https://example.com/redsys/response",
+}
 ```
 
-### 3. Set up the request parameters
-
-```python
-request.merchant_code = "100000001"
-request.terminal = "1"
-request.transaction_type = STANDARD_PAYMENT
-request.currency = EUR
-request.order = "000000001"
-# The amount must be defined as decimal and pre-formatted with only two decimals
-request.amount = D("10.56489").quantize(D(".01"), ROUND_HALF_UP)
-request.merchant_data = "merchant data for tracking purpose like order_id, session_key, ..."
-request.merchant_name = "Example Commerce"
-request.titular = "Example Ltd."
-request.product_description = "Products of Example Commerce"
-request.merchant_url = "https://example.com/redsys/response"
-```
-
-### 4. Prepare the request
+### 3. Prepare the request
 
 This method returns a dict with the necessary post parameters that are
 needed during the communication step.
 
 ```python
-args = client.prepare_request(request)
+args = client.prepare_request(parameters)
 ```
 
-### 5. Communication step
+### 4. Communication step
 
-Redirect the _user-agent_ to the corresponding Redsys's endpoint using
+Redirect the _user-agent_ to the corresponding Redsys' endpoint using
 the post parameters given in the previous step.
 
 After the payment process is finish, Redsys will respond making a
-request to the `merchant_url` defined in step 3.
+request to the `merchant_url` defined in step 2.
 
-### 6. Create and check the response
+### 5. Create and check the response
 
 Create the response object using the received parameters from Redsys.
 The method `create_response()` throws a `ValueError` in case the
@@ -94,7 +89,7 @@ if response.is_paid():
     # Do the corresponding actions after a successful payment
 else:
     # Do the corresponding actions after a failed payment
-    raise Exception(response.response, response.message)
+    raise Exception(response.code, response.message)
 ```
 
 **Methods for checking the response:**
@@ -111,8 +106,7 @@ According to the Redsys documentation:
   **paid**, **refunded** or **canceled**.
 
 Also, you can directly access the code or the message defined in Redsys
-documentation using `response.response_code` or
-`response.response_message`.
+documentation using `response.code` or `response.message`.
 
 ## Contributions
 
