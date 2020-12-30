@@ -85,7 +85,7 @@ not coming from Redsys** or that it **has been compromised**.
 signature = "YqFenHc2HpB273l8c995...."
 merchant_parameters = "AndvIh66VZdkC5TG3nYL5j4XfCnFFbo3VkOu9TAeTs58fxddgc..."
 response = client.create_response(signature, merchant_parameters)
-if response.is_paid():
+if response.is_paid:
     # Do the corresponding actions after a successful payment
 else:
     # Do the corresponding actions after a failed payment
