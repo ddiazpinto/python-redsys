@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "python-redsys"
-version = "0.4.0"
+version = "1.0.0"
 description = "A simple, clean and less dependant client to handle payments through Redsys."
 authors = ["Andrés Reverón Molina <andres@reveronmolina.me>", "David Díaz <d.diazp@gmail.com>"]
 license = "MIT"
