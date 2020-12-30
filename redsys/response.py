@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from decimal import Decimal
+from typing import Any, Dict
 
 RESPONSE = "Ds_Response"
 DATE = "Ds_Date"
@@ -85,14 +86,14 @@ MERCHANT_PARAMETERS_MAP = {
 }
 
 
-class Response(object):
+class Response:
     """
     Defines a response
     """
 
     _parameters = {}
 
-    def __init__(self, parameters):
+    def __init__(self, parameters: Dict[str, Any]):
         MERCHANT_PARAMETERS_MAP_REVERSE = {
             value: key for key, value in MERCHANT_PARAMETERS_MAP.items()
         }
@@ -104,37 +105,34 @@ class Response(object):
                 clean(value) if clean else value
             )
 
-    def __getattr__(self, item):
+    def __getattr__(self, item: str) -> Any:
         if item in MERCHANT_PARAMETERS_MAP:
             return self._parameters[item]
 
-    def __setattr__(self, key, value):
+    def __setattr__(self, key: str, value: Any):
         if key in MERCHANT_PARAMETERS_MAP:
             self._parameters[key] = value
 
     def is_authorized(self):
-        return (
-            (0 <= self.response_code <= 99)
-            or self.response_code == 900
-            or self.response_code == 400
-        )
+        return (0 <= self.code <= 99) or self.code == 900 or self.code == 400
 
     def is_paid(self):
-        return 0 <= self.response_code <= 99
+        return 0 <= self.code <= 99
 
     def is_refunded(self):
-        return self.response_code == 900
+        return self.code == 900
 
     def is_canceled(self):
-        return self.response_code == 400
+        return self.code == 400
 
     @property
-    def response_code(self):
+    def code(self):
         return int(self.response)
 
     @property
-    def response_message(self):
+    def message(self):
         return RESPONSE_MAP["0000"] if self.is_paid() else RESPONSE_MAP[self.response]
 
-    def clean_amount(self, value):
+    @staticmethod
+    def clean_amount(value):
         return Decimal("%s.%s" % (str(value)[:-2], str(value)[-2:]))

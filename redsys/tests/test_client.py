@@ -3,17 +3,17 @@ from decimal import Decimal as D
 
 import pytest
 
-from redsys.client import Client, RedirectClient
+from redsys.client import RedirectClient
 from redsys.constants import EUR, STANDARD_PAYMENT
 from redsys.request import Request
 
 
-class TestClient:
+class TestRedirectClient:
     @pytest.fixture(autouse=True)
     def set_up(self):
         secret_key = "sq7HjrUOBfKmC576ILgskD5srU870gJ7"
-        self.client = Client(secret_key)
-        parameters = {
+        self.client = RedirectClient(secret_key)
+        self.parameters = {
             "merchant_code": "100000001",
             "terminal": "1",
             "transaction_type": STANDARD_PAYMENT,
@@ -26,7 +26,7 @@ class TestClient:
             "product_description": "Products of Example Commerce",
             "merchant_url": "https://example.com/redsys/response",
         }
-        self.request = Request(parameters)
+        self.request = Request(self.parameters)
         self.merchant_params = self.request.prepare_parameters()
 
     def test_encode_parameters(self):
@@ -53,27 +53,6 @@ class TestClient:
         encoded_params = self.client.encode_parameters(self.merchant_params)
         signature = self.client.sign_hmac256(encrypted_order, encoded_params)
         assert signature == b"eEW4YN7/kkNHRO0/HhXy9TppzHwF38+eZApKAagDI9A="
-
-
-class TestRedirectClient:
-    @pytest.fixture(autouse=True)
-    def set_up(self):
-        secret_key = "sq7HjrUOBfKmC576ILgskD5srU870gJ7"
-        self.client = RedirectClient(secret_key)
-        self.parameters = {
-            "merchant_code": "100000001",
-            "terminal": "1",
-            "transaction_type": STANDARD_PAYMENT,
-            "currency": EUR,
-            "order": "000000001",
-            "amount": D("10.56489").quantize(D(".01"), ROUND_HALF_UP),
-            "merchant_data": "test merchant data",
-            "merchant_name": "Example Commerce",
-            "titular": "Example Ltd.",
-            "product_description": "Products of Example Commerce",
-            "merchant_url": "https://example.com/redsys/response",
-        }
-        self.request = Request(self.parameters)
 
     def test_prepare_request(self):
         prepared_request = self.client.prepare_request(self.parameters)

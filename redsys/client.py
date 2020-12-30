@@ -4,7 +4,8 @@ import hashlib
 import hmac
 import json
 import re
-from abc import ABCMeta, abstractmethod
+from abc import ABC, abstractmethod
+from typing import Any, Dict
 
 from Crypto.Cipher import DES3
 
@@ -18,10 +19,13 @@ SIGNATURE = "Ds_Signature"
 DEFAULT_SIGNATURE_VERSION = "HMAC_SHA256_V1"
 
 
-class Client(object):
-    __metaclass__ = ABCMeta
+class Client(ABC):
+    """
+    Abstract class from which RedirectClient inherits.
+    It implements methods that may be used in future clients(i.e. rest).
+    """
 
-    def __init__(self, secret_key=None):
+    def __init__(self, secret_key: str = None):
         self.secret_key = secret_key
 
     @abstractmethod
@@ -34,15 +38,28 @@ class Client(object):
     def prepare_request(self, request):
         raise NotImplementedError
 
-    def encode_parameters(self, parameters):
+    @staticmethod
+    def encode_parameters(parameters: Dict[str, Any]) -> bytes:
         """Encodes the merchant parameters in base64"""
         return base64.b64encode(json.dumps(parameters).encode())
 
-    def decode_parameters(self, parameters):
+    @staticmethod
+    def decode_parameters(parameters: bytes) -> Dict[str, Any]:
         """Decodes the merchant parameters from base64"""
         return json.loads(base64.b64decode(parameters).decode())
 
-    def encrypt_3DES(self, order):
+    @staticmethod
+    def sign_hmac256(encrypted_order: bytes, merchant_parameters: bytes) -> bytes:
+        """
+        Generates the encrypted signature using the 3DES-encrypted order
+        and base64-encoded merchant parameters
+        """
+        signature = hmac.new(
+            encrypted_order, merchant_parameters, hashlib.sha256
+        ).digest()
+        return base64.b64encode(signature)
+
+    def encrypt_3DES(self, order: str) -> bytes:
         """Encrypts(3DES algorithm) the payment order using the secret key"""
         cipher = DES3.new(
             base64.b64decode(self.secret_key), DES3.MODE_CBC, IV=b"\0\0\0\0\0\0\0\0"
@@ -52,22 +69,12 @@ class Client(object):
         # therefore we left-justify adding ceros
         return cipher.encrypt(order.encode().ljust(16, b"\0"))
 
-    def sign_hmac256(self, encrypted_order, merchant_parameters):
-        """
-        Generates the encrypted signature using the encrypted order
-        and merchant parameters
-        """
-        signature = hmac.new(
-            encrypted_order, merchant_parameters, hashlib.sha256
-        ).digest()
-        return base64.b64encode(signature)
-
-    def generate_signature(self, order, merchant_parameters):
+    def generate_signature(self, order: str, merchant_parameters: bytes) -> bytes:
         return self.sign_hmac256(self.encrypt_3DES(order), merchant_parameters)
 
 
 class RedirectClient(Client):
-    def prepare_request(self, parameters):
+    def prepare_request(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
         """Takes the merchant parameters and returns the necessary parameters
         to make the POST request to Redsys"""
         request = Request(parameters)
@@ -81,14 +88,14 @@ class RedirectClient(Client):
 
     def create_response(
         self,
-        signature,
-        merchant_parameters,
-    ):
+        signature: str,
+        merchant_parameters: str,
+    ) -> Response:
         """
         Decodes the Redsys response to check for validity.
         Checks if the received signature corresponds to the sent signature.
 
-        Both the signature and merchant parameters are plain strings, not bytes.
+        Both the `signature` and `merchant parameters` are plain strings, not bytes.
         """
         decoded_parameters = self.decode_parameters(merchant_parameters)
         response = Response(decoded_parameters)
