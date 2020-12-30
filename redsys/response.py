@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from decimal import Decimal
 from typing import Any, Dict
 
@@ -111,17 +110,24 @@ class Response:
 
     def __setattr__(self, key: str, value: Any):
         if key in MERCHANT_PARAMETERS_MAP:
-            self._parameters[key] = value
+            clean = getattr(self, "clean_%s" % MERCHANT_PARAMETERS_MAP[key], None)
+            self._parameters[MERCHANT_PARAMETERS_MAP[key]] = (
+                clean(value) if clean else value
+            )
 
+    @property
     def is_authorized(self):
         return (0 <= self.code <= 99) or self.code == 900 or self.code == 400
 
+    @property
     def is_paid(self):
         return 0 <= self.code <= 99
 
+    @property
     def is_refunded(self):
         return self.code == 900
 
+    @property
     def is_canceled(self):
         return self.code == 400
 
@@ -131,7 +137,7 @@ class Response:
 
     @property
     def message(self):
-        return RESPONSE_MAP["0000"] if self.is_paid() else RESPONSE_MAP[self.response]
+        return RESPONSE_MAP["0000"] if self.is_paid else RESPONSE_MAP[self.response]
 
     @staticmethod
     def clean_amount(value):

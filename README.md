@@ -96,13 +96,13 @@ else:
 
 According to the Redsys documentation:
 
-- `response.is_paid()`: Returns `True` if the response code is
+- `response.is_paid`: Returns `True` if the response code is
   between 0 and 99 (both included).
-- `response.is_canceled()`: Returns `True` if the response code
+- `response.is_canceled`: Returns `True` if the response code
   is 400.
-- `response.is_refunded()`: Returns `True` if the response code
+- `response.is_refunded`: Returns `True` if the response code
   is 900.
-- `response.is_authorized()`: Returns `True` if the response is
+- `response.is_authorized`: Returns `True` if the response is
   **paid**, **refunded** or **canceled**.
 
 Also, you can directly access the code or the message defined in Redsys
