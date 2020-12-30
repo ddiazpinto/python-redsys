@@ -84,6 +84,12 @@ class Request:
         if item in MERCHANT_PARAMETERS_MAP:
             return self._parameters[item]
 
+    def __setattr__(self, key, value):
+        if key in MERCHANT_PARAMETERS_MAP:
+            if check := getattr(self, "check_%s" % key, None):
+                check(value)
+            self._parameters[key] = value
+
     def prepare_parameters(self) -> Dict[str, str]:
         parameters = {}
         for key, value in self._parameters.items():
