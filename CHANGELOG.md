@@ -1,3 +1,9 @@
+# 1.0.1
+
+## Fixed
+
+- Fix required Python version
+
 # 1.0.0
 
 ## Added
@@ -11,7 +17,7 @@
 - Requests are now initialized with a dictionary of parameters(example on README)
 - The code and message of a Response can now be accessed from `response.code` and `response.message`
 - is_paid, is_refunded, is_canceled and is_authorized are now properties instead of methods
-  
+
 ## Fixed
 
 - Correctly enforce abstract class

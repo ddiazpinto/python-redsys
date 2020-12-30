@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "python-redsys"
-version = "1.0.0"
+version = "1.0.1"
 description = "A simple, clean and less dependant client to handle payments through Redsys."
 authors = ["Andrés Reverón Molina <andres@reveronmolina.me>", "David Díaz <d.diazp@gmail.com>"]
 license = "MIT"
@@ -16,7 +16,7 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = "^3.6"
 pycryptodome = "^3.9.9"
 
 [tool.poetry.dev-dependencies]
