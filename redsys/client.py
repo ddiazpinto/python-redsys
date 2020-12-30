@@ -24,13 +24,11 @@ class Client(ABC):
     It implements methods that may be used in future clients(i.e. rest).
     """
 
-    def __init__(self, secret_key: str = None):
-        self.secret_key = secret_key
+    def __init__(self, secret_key: str):
+        self.secret_key: bytes = secret_key.encode()
 
     @abstractmethod
-    def create_response(
-        self, signature, parameters, signature_version=DEFAULT_SIGNATURE_VERSION
-    ):
+    def create_response(self, signature, parameters):
         raise NotImplementedError
 
     @abstractmethod
@@ -96,7 +94,7 @@ class RedirectClient(Client):
 
         Both the `signature` and `merchant parameters` are plain strings, not bytes.
         """
-        decoded_parameters = self.decode_parameters(merchant_parameters)
+        decoded_parameters = self.decode_parameters(merchant_parameters.encode())
         response = Response(decoded_parameters)
         calculated_signature = self.generate_signature(
             response.order, merchant_parameters.encode()

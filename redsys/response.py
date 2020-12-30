@@ -90,7 +90,7 @@ class Response:
     Defines a response
     """
 
-    _parameters = {}
+    _parameters: Dict[str, Any] = {}
 
     def __init__(self, parameters: Dict[str, Any]):
         MERCHANT_PARAMETERS_MAP_REVERSE = {

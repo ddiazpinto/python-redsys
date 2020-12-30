@@ -1,6 +1,6 @@
 import re
 from decimal import Decimal
-from typing import Dict
+from typing import Any, Dict
 
 from redsys.constants import CURRENCIES, LANGUAGES, TRANSACTIONS
 
@@ -68,9 +68,9 @@ class Request:
     their values according to the platform specifications
     """
 
-    _parameters = {}
+    _parameters: Dict[str, Any] = {}
 
-    def __init__(self, parameters: Dict[str, str]) -> None:
+    def __init__(self, parameters: Dict[str, Any]) -> None:
         for key in parameters.keys():
             if key in MERCHANT_PARAMETERS_MAP:
                 check = getattr(self, "check_%s" % key, None)
@@ -80,7 +80,7 @@ class Request:
             else:
                 raise ValueError(f"Unknown parameter {key}")
 
-    def __getattr__(self, item: str) -> str:
+    def __getattr__(self, item: str) -> Any:
         if item in MERCHANT_PARAMETERS_MAP:
             return self._parameters[item]
 
