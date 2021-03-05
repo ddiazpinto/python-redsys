@@ -115,19 +115,19 @@ class Request(object):
 
     def check_merchant_data(self, value):
         if len(value) > 1024:
-            raise ValueError("merchant_data is bigger than 1024 characters.")
+            raise ValueError("merchant_data cannot be larger than 1024 characters.")
 
     def check_merchant_url(self, value):
         if len(value) > 250:
-            raise ValueError("merchant_url is bigger than 250 characters.")
+            raise ValueError("merchant_url cannot be larger than 250 characters.")
 
     def check_url_ok(self, value):
         if len(value) > 250:
-            raise ValueError("url_ok is bigger than 250 characters.")
+            raise ValueError("url_ok cannot be larger than 250 characters.")
 
     def check_url_ko(self, value):
         if len(value) > 250:
-            raise ValueError("url_ko is bigger than 250 characters.")
+            raise ValueError("url_ko cannot be larger than 250 characters.")
 
     def check_consumer_language(self, value):
         if value not in LANGUAGES:
