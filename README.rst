@@ -6,17 +6,17 @@ A simple, clean and less dependant client to handle payments through RedSys plat
 (previously known as Sermepa) using the two types of connection defined by the platform:
 *direct connection* (or webservice) and *redirect connection* or (secure method).
 
-The purpose of this library is just provide a normalized interface between RedSys and other applications.
+The purpose of this library is to provide a normalized interface between RedSys and other applications.
 
 **About `RedirectClient`**
 
 Although *redirect connection* depends on a webserver to resolve the communication step,
-the `RedirectClient` provided in this library does not assumes any kind of procedure to resolve that
-step; it merely prepares the necessary parameters to make a request and handle the corresponding response parameters.
+the `RedirectClient` provided in this library does not assume any kind of procedure to resolve that
+step; it simply prepares the necessary parameters to make a request and handle the corresponding response parameters.
 That's what less dependant means.
 
-If you are intend to use this library with django, take a look at <https://github.com/ddiazpinto/django-redsys>.
-Django-redsys uses this library and extends it to resolve all the communication step. Unfortunately it is not
+If you intend to use this library with django, take a look at <https://github.com/ddiazpinto/django-redsys>.
+Django-redsys uses this library and extends it to resolve all the communication step. Unfortunately, it is not
 documented at all but if you need some help, let me know submitting an issue.
 
 Example using *redirect connection*
@@ -60,7 +60,7 @@ Example using *redirect connection*
 
 4. Prepare the request
 ----------------------
-This method returns a dict with the necessary post parameters that are needed during the communication step.
+This method returns a dict with the necessary post parameters needed during the communication step.
 
 .. code-block:: python
 
@@ -75,7 +75,7 @@ After the payment process is finish, RedSys will respond making a request to the
 6. Create and check the response
 --------------------------------
 Create the response object using the received parameters from RedSys. The method `create_response()`
-throws a ``ValueError`` in case of the received `signature` does not be equal to the calculated one using
+throws a ``ValueError`` in case the received `signature` is not equal to the one calculated using
 the given merchant_parameters. This normally means that the response **is not comming from RedSys** or that
 **has been compromised**.
 
