@@ -135,22 +135,22 @@ class Request:
     @staticmethod
     def check_merchant_data(value):
         if len(value) > 1024:
-            raise ValueError("merchant_data is bigger than 1024 characters.")
+            raise ValueError("merchant_data cannot be longer than 1024 characters.")
 
     @staticmethod
     def check_merchant_url(value):
         if len(value) > 250:
-            raise ValueError("merchant_url is bigger than 250 characters.")
+            raise ValueError("merchant_url cannot be longer than 250 characters.")
 
     @staticmethod
     def check_url_ok(value):
         if len(value) > 250:
-            raise ValueError("url_ok is bigger than 250 characters.")
+            raise ValueError("url_ok cannot be longer than 250 characters.")
 
     @staticmethod
     def check_url_ko(value):
         if len(value) > 250:
-            raise ValueError("url_ko is bigger than 250 characters.")
+            raise ValueError("url_ko cannot be longer than 250 characters.")
 
     @staticmethod
     def check_consumer_language(value):
