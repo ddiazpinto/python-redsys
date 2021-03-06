@@ -39,10 +39,11 @@ htmlcov/
 .tox/
 .coverage
 .coverage.*
+.coveragerc
 .cache
 nosetests.xml
 coverage.xml
-*,cover
+*.cover
 .hypothesis/
 
 # Translations
@@ -87,3 +88,6 @@ ENV/
 
 # Rope project settings
 .ropeproject
+
+# Editors config
+.vscode/
