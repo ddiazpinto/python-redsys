@@ -71,12 +71,11 @@ class Request:
     _parameters: Dict[str, Any] = {}
 
     def __init__(self, parameters: Dict[str, Any]) -> None:
-        for key in parameters.keys():
+        for key, value in parameters.items():
             if key in MERCHANT_PARAMETERS_MAP:
-                check = getattr(self, "check_%s" % key, None)
-                if check:
-                    check(parameters[key])
-                self._parameters[key] = parameters[key]
+                if check := getattr(self, f"check_{str(key)}", None):
+                    check(value)
+                self._parameters[key] = value
             else:
                 raise ValueError(f"Unknown parameter {key}")
 
