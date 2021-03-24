@@ -1,3 +1,12 @@
+# 1.0.2
+
+## Fixed
+
+- Secret is now a mandatory parameter
+- Required Python is now ^3.7
+- Fix the license
+- Code and messages improvements, thanks @jdelarubia
+  
 # 1.0.1
 
 ## Fixed
