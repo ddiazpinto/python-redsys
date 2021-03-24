@@ -70,7 +70,7 @@ args = client.prepare_request(parameters)
 Redirect the _user-agent_ to the corresponding Redsys' endpoint using
 the post parameters given in the previous step.
 
-After the payment process is finish, Redsys will respond making a
+After the payment process is finished, Redsys will respond making a
 request to the `merchant_url` defined in step 2.
 
 ### 5. Create and check the response
