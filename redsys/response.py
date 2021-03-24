@@ -18,6 +18,7 @@ CARD_BRAND = 'Ds_Card_Brand'
 SECURE_PAYMENT = 'Ds_SecurePayment'
 AUTHORIZATION_CODE = 'Ds_AuthorisationCode'
 COF_TXNID = 'Ds_Merchant_Cof_Txnid'
+PROCESSED_PAY_METHOD = 'Ds_ProcessedPayMethod'
 ERROR_CODE = 'Ds_ErrorCode'
 
 RESPONSE_MAP = {
@@ -80,6 +81,7 @@ MERCHANT_PARAMETERS_MAP = {
     'authorization_code': AUTHORIZATION_CODE,
     'cof_txnid': COF_TXNID,
     'error_code': ERROR_CODE,
+    'processed_payment_method': PROCESSED_PAY_METHOD,
 }
 
 
