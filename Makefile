@@ -11,5 +11,11 @@ format:
 
 # Create a new version
 # ------------------------------------------------------------------------------
-version:
-	poetry run semantic-release publish
+version-patch:
+	poetry run semantic-release publish --patch
+
+version-minor:
+	poetry run semantic-release publish --minor
+
+version-major:
+	poetry run semantic-release publish --major
