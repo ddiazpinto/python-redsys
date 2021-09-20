@@ -1,3 +1,5 @@
+<!--next-version-placeholder-->
+
 # 1.0.2
 
 ## Fixed
