@@ -26,6 +26,7 @@ setup(
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.8',
     ],
     install_requires=['pycrypto>=2.6,<2.7']
 )
