@@ -2,6 +2,9 @@
 
 ## v1.0.3 (2021-09-21)
 
+## Fixed
+
+- add Ds_Amount_Euro parameter to response
 
 # 1.0.2
 
