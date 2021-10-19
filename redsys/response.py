@@ -143,4 +143,4 @@ class Response:
 
     @staticmethod
     def clean_amount(value):
-        return Decimal("%s.%s" % (str(value)[:-2], str(value)[-2:]))
+        return Decimal("{}.{}".format(str(value)[:-2], str(value)[-2:]))
