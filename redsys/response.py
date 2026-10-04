@@ -93,9 +93,11 @@ class Response:
     Defines a response
     """
 
-    _parameters: Dict[str, Any] = {}
+    _parameters: Dict[str, Any]
 
     def __init__(self, parameters: Dict[str, Any]):
+        # __setattr__ only handles merchant parameters, so the per-instance store is set directly.
+        object.__setattr__(self, "_parameters", {})
         MERCHANT_PARAMETERS_MAP_REVERSE = {value: key for key, value in MERCHANT_PARAMETERS_MAP.items()}
         for key, value in parameters.items():
             reversed_parameter = MERCHANT_PARAMETERS_MAP_REVERSE.get(key, key)
@@ -104,7 +106,7 @@ class Response:
 
     def __getattr__(self, item: str) -> Any:
         if item in MERCHANT_PARAMETERS_MAP:
-            return self._parameters[item]
+            return self._parameters.get(item)
 
     def __setattr__(self, key: str, value: Any):
         if key in MERCHANT_PARAMETERS_MAP:
