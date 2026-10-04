@@ -1,5 +1,11 @@
 <!--next-version-placeholder-->
 
+## v1.2.1 (2026-10-04)
+
+## Fixed
+
+- `Request` and `Response` instances no longer share their parameters within a process: a parsed response could carry fields of a previously parsed one (for example its amount), and a request could carry fields of a previous request (for example the Bizum mobile number). Known parameters that are absent now read as `None`.
+
 ## v1.2.0 (2023-10-28)
 
 
