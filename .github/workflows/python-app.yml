@@ -3,9 +3,9 @@ name: python-redsys
 
 on:
   push:
-    branches: [ master ]
+    branches: [ master, release/1.x ]
   pull_request:
-    branches: [ master ]
+    branches: [ master, release/1.x ]
 
 jobs:
   build:
