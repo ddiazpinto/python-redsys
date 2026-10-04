@@ -63,3 +63,12 @@ class TestRequest:
         merchant_url = "".join(choice("abcdefghijklmnopqrtsuvwxyz-0123456789") for _ in range(251))
         with pytest.raises(ValueError):
             assert Request.check_merchant_url(merchant_url)
+
+    def test_requests_do_not_share_parameters(self):
+        first = Request(
+            {"order": "000000000001", "amount": D("1.00"), "currency": EUR, "mobile_number": "+34700000000"}
+        )
+        second = Request({"order": "000000000002", "amount": D("2.00"), "currency": EUR})
+        assert "Ds_Merchant_Bizum_MobileNumber" not in second.prepare_parameters()
+        assert second.mobile_number is None
+        assert first.prepare_parameters()["Ds_Merchant_Bizum_MobileNumber"] == "+34700000000"

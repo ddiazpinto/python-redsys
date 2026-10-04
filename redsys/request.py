@@ -77,9 +77,11 @@ class Request:
     their values according to the platform specifications
     """
 
-    _parameters: Dict[str, Any] = {}
+    _parameters: Dict[str, Any]
 
     def __init__(self, parameters: Dict[str, Any]) -> None:
+        # __setattr__ only handles merchant parameters, so the per-instance store is set directly.
+        object.__setattr__(self, "_parameters", {})
         for key, value in parameters.items():
             if key in MERCHANT_PARAMETERS_MAP:
                 if check := getattr(self, f"check_{str(key)}", None):
@@ -90,7 +92,7 @@ class Request:
 
     def __getattr__(self, item: str) -> Any:
         if item in MERCHANT_PARAMETERS_MAP:
-            return self._parameters[item]
+            return self._parameters.get(item)
 
     def __setattr__(self, key, value):
         if key in MERCHANT_PARAMETERS_MAP:
