@@ -1,114 +1,96 @@
-
-[![PyPI version](https://badge.fury.io/py/python-redsys.svg)](https://badge.fury.io/py/python-redsys)
-
 # Welcome to python-redsys!
 
-A simple, clean and less dependant client to handle payments through the
-Redsys platform using one of the available methods: _redirect connection_ or (secure method).
+[![CI](https://github.com/ddiazpinto/python-redsys/actions/workflows/python-app.yml/badge.svg?branch=release/1.x)](https://github.com/ddiazpinto/python-redsys/actions/workflows/python-app.yml?query=branch%3Arelease%2F1.x) [![PyPI](https://img.shields.io/pypi/v/python-redsys.svg)](https://pypi.org/project/python-redsys/) ![Python 3.8+](https://img.shields.io/badge/python-3.8%2B-blue.svg) [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/ddiazpinto/python-redsys/blob/release/1.x/LICENSE)
 
-The purpose of this library is to provide a normalized interface between
-Redsys and other Python applications.
+A simple, lightweight client to handle payments through the RedSys platform, using its *redirect connection* (browser form POST).
 
-**About RedirectClient**
+The library only builds the signed request and verifies/parses the response. It makes no network or browser calls of its own: the payment form is submitted from the cardholder's browser.
 
-Although _redirect connection_ depends on a webserver to resolve the
-communication step, the RedirectClient provided in this library does not
-assume any kind of procedure to resolve that step; it merely prepares
-the necessary parameters to make a request and handles the corresponding
-response parameters. That's what less dependant means.
+## Installation
 
-## Example using _redirect connection_
+```bash
+pip install "python-redsys>=1.2,<2"
 
-### 0. Install python-redsys
+# or with Poetry
+poetry add "python-redsys@^1.2"
+```
 
-You can add python-redsys to your project with pip:
-> pip install python-redsys
+Requires Python 3.8+. Runtime dependency: `pycryptodome`.
 
-Or with poetry:
-> poetry add python-redsys
+## Usage
 
-### 1. Instantiate the redirect client
+The client prepares a request from a dict of parameters and verifies the response. Parameter values are validated on construction (`ValueError` on an unknown parameter or an invalid value, `TypeError` when `amount` is not a `Decimal`); `order` has 12 characters (4 digits followed by 8 alphanumerics), and `amount` is a `Decimal`, serialized to integer minor units on the wire. The allowed values for `currency`, `transaction_type` and `consumer_language` are in `redsys.constants`.
+
+## Using *redirect connection*
+
+### 1. Build a signed request
 
 ```python
-from decimal import Decimal as D, ROUND_HALF_UP
-from redsys.constants import EUR, STANDARD_PAYMENT
+from decimal import Decimal, ROUND_HALF_UP
 from redsys.client import RedirectClient
+from redsys.constants import EUR, STANDARD_PAYMENT
 
-secret_key = "123456789abcdef"
-client = RedirectClient(secret_key)
+client = RedirectClient(secret_key="sq7HjrUOBfKmC576ILgskD5srU870gJ7")
+
+post_parameters = client.prepare_request({
+    "merchant_code": "999008881",
+    "terminal": "1",
+    "transaction_type": STANDARD_PAYMENT,
+    "currency": EUR,
+    "order": "000000000001",
+    # The amount is a Decimal; pre-quantize to two decimals.
+    "amount": Decimal("10.56489").quantize(Decimal(".01"), ROUND_HALF_UP),
+    "merchant_url": "https://example.com/redsys/response",
+    "url_ok": "https://example.com/ok",
+    "url_ko": "https://example.com/ko",
+    "merchant_name": "Example Commerce",
+    "product_description": "Products of Example Commerce",
+})  # Ds_SignatureVersion / Ds_MerchantParameters / Ds_Signature
 ```
 
-### 2. Set up the request parameters
+The secret key, merchant code `999008881` and terminal `1` are the RedSys public test merchant's. `Ds_MerchantParameters` and `Ds_Signature` are returned as `bytes`; decode them before rendering them in an HTML form.
+
+Bizum: add `"payment_method": "z"` (and optionally `"mobile_number"`) to the parameters.
+
+### 2. Communication step
+
+Auto-submit an HTML form (`method="POST"`) with the three `post_parameters` fields to the RedSys endpoint:
+
+- Test: `https://sis-t.redsys.es:25443/sis/realizarPago`
+- Production: `https://sis.redsys.es/sis/realizarPago`
+
+RedSys notifies the result both as a server-to-server POST to `merchant_url` and as a browser redirect to `url_ok` / `url_ko`.
+
+### 3. Verify and read the response
+
+`create_response()` takes the received `Ds_Signature` and `Ds_MerchantParameters` and raises `ValueError` on signature mismatch.
 
 ```python
-parameters = {
-  "merchant_code": "100000001",
-  "terminal": "1",
-  "transaction_type": STANDARD_PAYMENT,
-  "currency": EUR,
-  "order": "000000001",
-  "amount": D("10.56489").quantize(D(".01"), ROUND_HALF_UP),
-  "merchant_data": "test merchant data",
-  "merchant_name": "Example Commerce",
-  "titular": "Example Ltd.",
-  "product_description": "Products of Example Commerce",
-  "merchant_url": "https://example.com/redsys/response",
-}
-```
+response = client.create_response(signature, merchant_parameters)  # as RedSys posted them back
 
-### 3. Prepare the request
-
-This method returns a dict with the necessary post parameters that are
-needed during the communication step.
-
-```python
-args = client.prepare_request(parameters)
-```
-
-### 4. Communication step
-
-Redirect the _user-agent_ to the corresponding Redsys' endpoint using
-the post parameters given in the previous step.
-
-After the payment process is finished, Redsys will respond making a
-request to the `merchant_url` defined in step 2.
-
-### 5. Create and check the response
-
-Create the response object using the received parameters from Redsys.
-The method `create_response()` throws a `ValueError` in case the
-received signature is not equal to the calculated one using the
-given `merchant_parameters`. This normally means that the response **is
-not coming from Redsys** or that it **has been compromised**.
-
-```python
-signature = "YqFenHc2HpB273l8c995...."
-merchant_parameters = "AndvIh66VZdkC5TG3nYL5j4XfCnFFbo3VkOu9TAeTs58fxddgc..."
-response = client.create_response(signature, merchant_parameters)
 if response.is_paid:
-    # Do the corresponding actions after a successful payment
+    ...  # actions after a successful payment
 else:
-    # Do the corresponding actions after a failed payment
-    raise Exception(response.code, response.message)
+    raise Exception(f"declined with code {response.code}")
 ```
 
-**Methods for checking the response:**
+Response predicates (per the RedSys documentation):
 
-According to the Redsys documentation:
+- `response.is_paid`: response code between 0 and 99.
+- `response.is_canceled`: response code 400.
+- `response.is_refunded`: response code 900.
+- `response.is_authorized`: paid, refunded or canceled.
 
-- `response.is_paid`: Returns `True` if the response code is
-  between 0 and 99 (both included).
-- `response.is_canceled`: Returns `True` if the response code
-  is 400.
-- `response.is_refunded`: Returns `True` if the response code
-  is 900.
-- `response.is_authorized`: Returns `True` if the response is
-  **paid**, **refunded** or **canceled**.
+`response.code` is the RedSys code as an `int`, and `response.message` its Spanish description (`None` for a code without one). Decoded fields (`response.order`, `response.amount` as a `Decimal`, ...) read as attributes, `None` when absent; `response.parameters` holds every decoded parameter: listed ones under their attribute name (`amount`), unlisted ones under their original `Ds_*` key.
 
-Also, you can directly access the code or the message defined in Redsys
-documentation using `response.code` or `response.message`.
+## Signature version
 
-## Contributions
+The 1.x line signs with `HMAC_SHA256_V1` (3DES + HMAC-SHA256), the legacy scheme still accepted by RedSys. `HMAC_SHA512_V1` requires 2.x.
 
-Please, feel free to send any contribution that maintains the _less
-dependant_ philosophy.
+## Support
+
+The 1.x line receives fixes until 2026-12-31.
+
+## Contributing
+
+Contributions that keep the *lightweight* philosophy are welcome.
