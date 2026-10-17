@@ -1,79 +1,88 @@
-<!--next-version-placeholder-->
+# Changelog
 
-## v1.2.1 (2026-10-04)
+All notable changes to this project. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) with [Semantic Versioning](https://semver.org/).
 
-## Fixed
+## [1.2.1] - 2026-10-04
+
+### Fixed
 
 - `Request` and `Response` instances no longer share their parameters within a process: a parsed response could carry fields of a previously parsed one (for example its amount), and a request could carry fields of a previous request (for example the Bizum mobile number). Known parameters that are absent now read as `None`.
 
-## v1.2.0 (2023-10-28)
+## [1.2.0] - 2023-10-28
 
+### Added
 
+- BIZUM payment option: `mobile_number` (`Ds_Merchant_Bizum_MobileNumber`) and `payment_method` (`Ds_Merchant_PayMethods`) request parameters.
 
-## v1.1.1 (2022-01-06)
+### Changed
 
-## Fixed
+- Order IDs are validated as 12 characters (4 digits followed by 8 alphanumerics) instead of 9.
 
-- protect against failure if new parameters are added to the API response
+## [1.1.1] - 2022-01-06
 
-## v1.1.0 (2021-10-19)
+### Fixed
 
-## Changed
+- Responses no longer fail when RedSys adds parameters the library does not list; unlisted parameters are kept under their original key.
 
-- expose parameters in response
+## [1.1.0] - 2021-10-19
 
-## v1.0.3 (2021-09-21)
+### Changed
 
-## Fixed
+- `Response.parameters` exposes the decoded response parameters.
 
-- add Ds_Amount_Euro parameter to response
+## [1.0.3] - 2021-09-21
 
-# 1.0.2
+### Fixed
 
-## Fixed
+- `Ds_Amount_Euro` parameter added to the response.
 
-- Secret is now a mandatory parameter
-- Required Python is now ^3.7
-- Fix the license
-- Code and messages improvements, thanks @jdelarubia
-  
-# 1.0.1
+## [1.0.2] - 2021-03-24
 
-## Fixed
+### Fixed
 
-- Fix required Python version
+- The secret key is a mandatory parameter.
+- Minimum Python is 3.7.
+- License file corrected.
+- Code and message improvements, thanks @jdelarubia.
 
-# 1.0.0
+## [1.0.1] - 2020-12-30
 
-## Added
+### Fixed
 
-- Use mypy to type codebase
-- Request and Response tests
-- Use @staticmethod where necessary
+- Required Python version.
 
-## Changed
+## [1.0.0] - 2020-12-30
 
-- Requests are now initialized with a dictionary of parameters(example on README)
-- The code and message of a Response can now be accessed from `response.code` and `response.message`
-- is_paid, is_refunded, is_canceled and is_authorized are now properties instead of methods
+### Added
 
-## Fixed
+- Type hints checked with mypy.
+- Request and response tests.
 
-- Correctly enforce abstract class
+### Changed
 
-# 0.4.0
+- Requests are initialized with a dictionary of parameters.
+- A response's code and message are available as `response.code` and `response.message`.
+- `is_paid`, `is_refunded`, `is_canceled` and `is_authorized` are properties instead of methods.
+- Static helpers are `@staticmethod`.
 
-## Added
+### Fixed
 
-- Client tests
+- The abstract client class is enforced.
 
-## Changed
+## [0.4.0] - 2020-12-28
 
-- Replaced pycrypto(which is abandoned) by PyCryptodome
-- Migrated all the constants to a single file(currencies, languages and transactions)
-- Drop compatibility with Python 2.x
-- Code cleanup
+### Added
 
-# 0.3.0
+- Client tests.
 
-- Initial release
+### Changed
+
+- pycrypto (abandoned) replaced by PyCryptodome.
+- Currencies, languages and transaction types consolidated into a single constants module.
+- Python 2 support dropped.
+
+## [0.3.0] - 2020-12-26
+
+### Changed
+
+- Packaging migrated to Poetry, with pre-commit, isort and Black.
