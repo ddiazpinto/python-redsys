@@ -30,3 +30,10 @@ class TestResponse:
         assert "amount" not in second.parameters
         assert second.amount is None
         assert first.amount == Decimal("1.00")
+
+    def test_message_for_four_digit_codes(self):
+        assert Response({"Ds_Response": "0190"}).message == "Denegación del emisor sin especificar motivo"
+        assert Response({"Ds_Response": "0900"}).message == "Transacción autorizada para devoluciones y confirmaciones"
+        assert Response({"Ds_Response": "0400"}).message == "Transacción autorizada para anulaciones"
+        assert Response({"Ds_Response": "9915"}).message == "A petición del usuario se ha cancelado el pago"
+        assert Response({"Ds_Response": "0105"}).message is None

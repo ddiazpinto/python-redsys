@@ -135,7 +135,10 @@ class Response:
 
     @property
     def message(self):
-        return RESPONSE_MAP["0000"] if self.is_paid else RESPONSE_MAP[self.response]
+        if self.is_paid:
+            return RESPONSE_MAP["0000"]
+        # RedSys sends 4-digit codes ("0190"); the map keys drop the leading zeros ("190").
+        return RESPONSE_MAP.get(self.response) or RESPONSE_MAP.get(str(self.code))
 
     @property
     def parameters(self):
