@@ -1,44 +1,61 @@
-[tool.poetry]
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
 name = "python-redsys"
-version = "1.2.2"
+version = "2.0.0"
 description = "A simple, lightweight client to handle payments through the RedSys platform."
-authors = ["David Díaz <d.diazp@gmail.com>", "Andrés Reverón Molina <andres@reveronmolina.me>"]
-license = "MIT"
 readme = "README.md"
-homepage = "https://github.com/ddiazpinto/python-redsys"
+requires-python = ">=3.10"
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
+authors = [{ name = "David Díaz", email = "d.diazp@gmail.com" }]
+keywords = ["redsys", "sermepa", "tpv", "payments", "psd2"]
+dependencies = ["cryptography>=49", "pydantic>=2.13"]
 classifiers = [
-        'Intended Audience :: Developers',
-        'License :: OSI Approved :: MIT License',
-        'Operating System :: OS Independent',
-]
-packages = [
-    { include = "redsys" }
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3.15",
+    "Topic :: Office/Business :: Financial",
 ]
 
-[tool.poetry.dependencies]
-python = "^3.8"
-pycryptodome = "^3.19.1"
+[project.urls]
+Homepage = "https://github.com/ddiazpinto/python-redsys"
+Source = "https://github.com/ddiazpinto/python-redsys"
 
-[tool.poetry.dev-dependencies]
-pytest = "^7.4.2"
-pre-commit = "^3.5.0"
-pytest-cov = "^4.1.0"
-mypy = "^1.6.1"
-ruff = "^0.1.3"
+[project.optional-dependencies]
+http = ["httpx>=0.23"]
+test = ["pytest>=7", "pytest-cov"]
+# The hash-pinned requirements-lint.lock is resolved from this extra (plus the
+# runtime deps), so it stays small.
+lint = ["ruff", "mypy"]
+dev = ["ruff", "mypy", "pre-commit"]
+
+[tool.setuptools.packages.find]
+include = ["redsys*"]
+exclude = ["tests*"]
+
+[tool.setuptools.package-data]
+redsys = ["py.typed"]
 
 [tool.ruff]
 line-length = 120
+target-version = "py310"
 
 [tool.ruff.lint]
-select = ["E","F","UP","B","SIM","I"]
+select = ["E", "F", "I", "B", "UP"]
 
 [tool.ruff.format]
-quote-style = "double"
-indent-style = "space"
+quote-style = "single"
 
-[tool.ruff.isort]
-force-single-line = true
-
-[build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+[tool.mypy]
+python_version = "3.10"
+ignore_missing_imports = true
+exclude = ["build/"]
