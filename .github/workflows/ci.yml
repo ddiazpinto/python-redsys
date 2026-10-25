@@ -1,0 +1,65 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11" # matches requirements-lint.lock
+      - name: Install (hash-pinned, reproducible)
+        run: |
+          pip install --require-hashes -r requirements-lint.lock
+          pip install -e . --no-deps
+      - name: Ruff
+        run: ruff check redsys tests
+      - name: Ruff format
+        run: ruff format --check redsys tests
+      - name: Mypy
+        run: mypy redsys
+
+  lock-in-sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11" # the lock is compiled for 3.11
+      # Pinned so the lock format/headers stay reproducible. pip-compile is "sticky"
+      # (it reuses the existing pins as constraints), so this re-resolve rewrites the
+      # lock only when pyproject.toml actually forces it - not on unrelated upstream
+      # releases - which is what makes this check stable rather than flaky.
+      - name: Install pip-tools (pinned)
+        run: pip install 'pip-tools==7.5.3'
+      - name: Lock is in sync with pyproject.toml
+        run: |
+          make lock
+          git diff --exit-code -- requirements-lint.lock
+
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14", "3.15"]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install
+        run: pip install -e ".[test,http]"
+      - name: Test
+        run: pytest -q --cov=redsys --cov-report=xml tests/
+      - name: Upload coverage to Codecov
+        if: matrix.python-version == '3.12'
+        uses: codecov/codecov-action@v7
+        with:
+          files: coverage.xml
+          fail_ci_if_error: false
