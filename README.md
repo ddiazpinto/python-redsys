@@ -19,6 +19,17 @@ pip install "python-redsys[http]"
 
 Requires Python 3.10+. Runtime dependencies: `cryptography` and `pydantic` (v2).
 
+## Status
+
+| | |
+|---|---|
+| Version | 2.0.0; 1.x receives fixes until 2026-12-31 |
+| Python | 3.10 to 3.15 |
+| RedSys documents followed | Redirection guide 4.2 (2026-02-04), REST guide 4.0.1 (2025-10-17), Bizum guide 2.6 (2026-08-25) |
+| Signature versions | `HMAC_SHA512_V2` (default), `HMAC_SHA512_V1`, `HMAC_SHA256_V1` |
+| Verified against the RedSys test environment | Redirect connection in a browser, with the 3DS challenge, for all three signature versions (2026-10-25); direct connection end to end (3DS initialization, challenged payment, refund) on demand by the *Live* workflow |
+| Not yet verified live | Frictionless 3DS and the 3DSMethod step |
+
 ## Upgrading from 1.x
 
 2.0 has a new API. The [migration guide](docs/migration-1x-to-2x.md) lists every change; 1.x receives fixes until 2026-12-31.

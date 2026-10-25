@@ -5,7 +5,7 @@ Forward-looking only. Completed work lives in `CHANGELOG.md`.
 ## Pending
 
 - [ ] Decide on SOAP direct connection: ship a `soap` extra or keep it out of scope.
-- [ ] Confirm transaction types 8, 11 and 44-48 against the reference and add them to `redsys.conf.transactions` if wanted.
+- [ ] Add the transaction types in the official table that `redsys.transactions` lacks: 11, 38 and 44 to 48.
 - [ ] Decide whether 2.x supports the 1.x transaction types with no 2.0 equivalent: recurring 5 and 6, and the deferred pre-authorization family O, P, Q, R and S (`transaction_type` is an integer in the models).
 
 ## Before production

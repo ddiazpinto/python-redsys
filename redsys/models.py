@@ -20,7 +20,7 @@ from json import dumps, loads
 from typing import Any
 from warnings import warn
 
-from pydantic import BaseModel, ConfigDict, Field, field_serializer, field_validator, model_validator
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field, field_serializer, field_validator, model_validator
 
 from redsys.api.currencies import CURRENCIES, CURRENCY_DECIMALS
 from redsys.api.transactions import TRANSACTION_TYPES
@@ -43,10 +43,14 @@ def decode_merchant_parameters(data: bytes) -> dict:
     return loads(b64decode(data + b'=' * (-len(data) % 4)).decode('utf-8'))
 
 
+def currency_decimals(currency: int | None) -> int:
+    """ISO-4217 minor-unit exponent of a currency; 2 when unknown."""
+    return CURRENCY_DECIMALS.get(currency, 2) if currency is not None else 2
+
+
 def minor_units_factor(currency: int | None) -> int:
     """Power-of-ten factor that converts major units to the wire minor units."""
-    decimals = CURRENCY_DECIMALS.get(currency, 2) if currency is not None else 2
-    return 10**decimals
+    return 10 ** currency_decimals(currency)
 
 
 class BaseRequest(BaseModel):
@@ -243,7 +247,10 @@ class Response(BaseModel):
     secure_payment: str | None = Field(None, alias='Ds_SecurePayment')
     authorization_code: str | None = Field(None, alias='Ds_AuthorisationCode')
     error_code: str | None = Field(None, alias='Ds_ErrorCode')
-    card_number: str | None = Field(None, alias='Ds_CardNumber')
+    # REST responses send Ds_CardNumber; redirect notifications send Ds_Card_Number.
+    card_number: str | None = Field(
+        None, alias='Ds_CardNumber', validation_alias=AliasChoices('Ds_CardNumber', 'Ds_Card_Number', 'card_number')
+    )
     expiry_date: str | None = Field(None, alias='Ds_ExpiryDate')
     card_psd2: str | None = Field(None, alias='Ds_Card_PSD2')
     excep_sca: str | None = Field(
@@ -269,7 +276,8 @@ class Response(BaseModel):
     def from_merchant_parameters(cls, merchant_parameters: bytes) -> 'Response':
         response = cls.model_validate(decode_merchant_parameters(merchant_parameters))
         if response.amount is not None:
-            response.amount = response.amount / minor_units_factor(response.currency)
+            # scaleb keeps the currency's decimals: 100 EUR minor units read as 1.00, not 1.
+            response.amount = response.amount.scaleb(-currency_decimals(response.currency))
         return response
 
     def get_order(self) -> str | None:
@@ -336,5 +344,6 @@ __all__ = [
     'CancellationMessage',
     'Response',
     'decode_merchant_parameters',
+    'currency_decimals',
     'minor_units_factor',
 ]

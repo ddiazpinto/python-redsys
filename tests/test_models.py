@@ -158,9 +158,9 @@ def test_response_predicates_and_code():
 
 
 def test_response_keeps_unmapped_fields():
-    resp = _response(Ds_Response='0000', Ds_Order='1', Ds_Amount='100', Ds_Card_Number='454881******0003')
+    resp = _response(Ds_Response='0000', Ds_Order='1', Ds_Amount='100', Ds_Control_1790968949956='1790968949956')
     assert resp.is_paid()
-    assert resp.model_extra == {'Ds_Card_Number': '454881******0003'}
+    assert resp.model_extra == {'Ds_Control_1790968949956': '1790968949956'}
 
 
 def test_response_amount_euro_and_processed_pay_method():
@@ -195,6 +195,9 @@ def test_request_amount_scaled_by_currency_exponent():
 def test_response_amount_scaled_by_currency_exponent():
     assert _response(Ds_Response='0000', Ds_Order='1', Ds_Amount='1056', Ds_Currency='978').amount == Decimal('10.56')
     assert _response(Ds_Response='0000', Ds_Order='1', Ds_Amount='1000', Ds_Currency='392').amount == Decimal('1000')
+    # The currency's decimals are kept, as RedSys shows them: 100 EUR minor units are 1.00.
+    assert str(_response(Ds_Response='0000', Ds_Order='1', Ds_Amount='100', Ds_Currency='978').amount) == '1.00'
+    assert str(_response(Ds_Response='0000', Ds_Order='1', Ds_Amount='100', Ds_Currency='392').amount) == '100'
 
 
 def test_response_is_canceled():
@@ -333,3 +336,11 @@ def test_response_bizum_fields():
     )
     assert (resp.processed_pay_method, resp.bizum_id_oper, resp.bizum_cuenta_truncada) == ('68', '9382755', 'XXXX4000')
     assert resp.model_extra == {}
+
+
+def test_response_card_number_from_redirect_and_rest_names():
+    # Redirect notifications send Ds_Card_Number (seen live 2026-10-25); REST responses send Ds_CardNumber.
+    redirect = _response(Ds_Response='0000', Ds_Order='1', Ds_Card_Number='454881******0003')
+    rest = _response(Ds_Response='0000', Ds_Order='1', Ds_CardNumber='454881******0003')
+    assert redirect.card_number == rest.card_number == '454881******0003'
+    assert redirect.model_extra == {}
