@@ -10,6 +10,8 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v10.3.2
+        with:
+          version: ">=0.13.4" # eMudhra CA incident fix
       - name: Install (locked)
         run: uv sync --locked --no-default-groups --group test --extra http
       - name: Live tests

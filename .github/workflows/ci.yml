@@ -11,6 +11,8 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v10.3.2
+        with:
+          version: ">=0.13.4" # eMudhra CA incident fix
       - name: Lock is in sync with pyproject.toml
         run: uv lock --check
       - name: Install (locked)
@@ -31,6 +33,8 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v10.3.2
+        with:
+          version: ">=0.13.4" # eMudhra CA incident fix
       - name: Install (locked)
         run: uv sync --locked --no-default-groups --group test --extra http --python ${{ matrix.python-version }}
       - name: Test
@@ -54,6 +58,8 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v10.3.2
+        with:
+          version: ">=0.13.4" # eMudhra CA incident fix
       - name: Test with the lowest declared versions
         run: >-
           uv run --isolated --no-project --python ${{ matrix.python-version }}

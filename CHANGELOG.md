@@ -10,6 +10,10 @@ All notable changes to this project. Format follows [Keep a Changelog](https://k
 - Dynamic currency conversion: `dcc` on direct requests (`Ds_Merchant_DCC`) and `Response.dcc` (`Ds_DCC`).
 - Tokenization and credential-on-file fields (`identifier`, `cof_*`, `direct_payment`) on redirect requests, as the redirect reference documents.
 
+### Security
+
+- CI requires uv 0.13.4 or later and the release build pip 26.2.2 or later, the versions that stop trusting the compromised eMudhra intermediate CAs.
+
 ### Fixed
 
 - `Response.card_number` reads redirect notifications, which name the field `Ds_Card_Number` (REST uses `Ds_CardNumber`); it was left in `model_extra`.
