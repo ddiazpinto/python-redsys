@@ -1,23 +1,23 @@
-# Install once with:  pip install -e ".[dev]" && pre-commit install
-# The ruff/mypy hooks use the locally installed tools so versions match the dev env.
+# Install once with:  uv sync && uv run pre-commit install
+# The hooks run the tools from the project environment, so versions match uv.lock.
 repos:
   - repo: local
     hooks:
       - id: ruff
         name: ruff (lint)
-        entry: ruff check --fix
+        entry: uv run --no-sync ruff check --fix
         language: system
         types: [python]
         require_serial: true
       - id: ruff-format
         name: ruff (format)
-        entry: ruff format
+        entry: uv run --no-sync ruff format
         language: system
         types: [python]
         require_serial: true
       - id: mypy
         name: mypy
-        entry: mypy redsys
+        entry: uv run --no-sync mypy redsys
         language: system
         types: [python]
         pass_filenames: false

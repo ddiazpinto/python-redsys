@@ -10,37 +10,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-python@v7
-        with:
-          python-version: "3.11" # matches requirements-lint.lock
-      - name: Install (hash-pinned, reproducible)
-        run: |
-          pip install --require-hashes -r requirements-lint.lock
-          pip install -e . --no-deps
-      - name: Ruff
-        run: ruff check redsys tests
-      - name: Ruff format
-        run: ruff format --check redsys tests
-      - name: Mypy
-        run: mypy redsys
-
-  lock-in-sync:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-python@v7
-        with:
-          python-version: "3.11" # the lock is compiled for 3.11
-      # Pinned so the lock format/headers stay reproducible. pip-compile is "sticky"
-      # (it reuses the existing pins as constraints), so this re-resolve rewrites the
-      # lock only when pyproject.toml actually forces it - not on unrelated upstream
-      # releases - which is what makes this check stable rather than flaky.
-      - name: Install pip-tools (pinned)
-        run: pip install 'pip-tools==7.5.3'
+      - uses: astral-sh/setup-uv@v10.3.2
       - name: Lock is in sync with pyproject.toml
-        run: |
-          make lock
-          git diff --exit-code -- requirements-lint.lock
+        run: uv lock --check
+      - name: Install (locked)
+        run: uv sync --locked --no-default-groups --group lint
+      - name: Ruff
+        run: uv run --no-sync ruff check redsys tests
+      - name: Ruff format
+        run: uv run --no-sync ruff format --check redsys tests
+      - name: Mypy
+        run: uv run --no-sync mypy redsys
 
   test:
     runs-on: ubuntu-latest
@@ -50,16 +30,30 @@ jobs:
         python-version: ["3.10", "3.11", "3.12", "3.13", "3.14", "3.15"]
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-python@v7
-        with:
-          python-version: ${{ matrix.python-version }}
-      - name: Install
-        run: pip install -e ".[test,http]"
+      - uses: astral-sh/setup-uv@v10.3.2
+      - name: Install (locked)
+        run: uv sync --locked --no-default-groups --group test --extra http --python ${{ matrix.python-version }}
       - name: Test
-        run: pytest -q --cov=redsys --cov-report=xml tests/
+        run: uv run --no-sync pytest -q --cov=redsys --cov-report=xml tests/
       - name: Upload coverage to Codecov
         if: matrix.python-version == '3.12'
         uses: codecov/codecov-action@v7
         with:
           files: coverage.xml
           fail_ci_if_error: false
+
+  # The declared minimums are what users may resolve to; prove them on the oldest and newest Python.
+  lowest-dependencies:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.15"]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.3.2
+      - name: Test with the lowest declared versions
+        run: >-
+          uv run --isolated --no-project --python ${{ matrix.python-version }}
+          --resolution lowest-direct --with-editable ".[http]" --with "pytest>=8.4"
+          pytest -q tests/

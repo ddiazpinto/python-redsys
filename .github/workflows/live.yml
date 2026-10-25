@@ -9,12 +9,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-python@v7
-        with:
-          python-version: "3.13"
-      - name: Install
-        run: pip install -e ".[test,http]"
+      - uses: astral-sh/setup-uv@v10.3.2
+      - name: Install (locked)
+        run: uv sync --locked --no-default-groups --group test --extra http
       - name: Live tests
         env:
           REDSYS_LIVE: "1"
-        run: pytest -q tests/test_live.py
+        run: uv run --no-sync pytest -q tests/test_live.py
