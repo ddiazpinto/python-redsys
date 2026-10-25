@@ -31,12 +31,17 @@ Homepage = "https://github.com/ddiazpinto/python-redsys"
 Source = "https://github.com/ddiazpinto/python-redsys"
 
 [project.optional-dependencies]
-http = ["httpx>=0.23"]
-test = ["pytest>=7", "pytest-cov"]
-# The hash-pinned requirements-lint.lock is resolved from this extra (plus the
-# runtime deps), so it stays small.
+# 0.26 is the oldest httpx that imports on Python 3.13 and later.
+http = ["httpx>=0.26"]
+
+[dependency-groups]
+test = ["pytest>=8.4", "pytest-cov"]
 lint = ["ruff", "mypy"]
-dev = ["ruff", "mypy", "pre-commit"]
+dev = [
+    { include-group = "test" },
+    { include-group = "lint" },
+    "pre-commit",
+]
 
 [tool.setuptools.packages.find]
 include = ["redsys*"]

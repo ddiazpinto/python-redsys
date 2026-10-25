@@ -1,14 +1,8 @@
-.PHONY: test lock
-
-# Interpreter to use; override if the venv is not activated, e.g.
-#   make test PYTHON=.venv/bin/python
-PYTHON ?= python
+.PHONY: test live
 
 test:
-	$(PYTHON) -m pytest -q tests/
+	uv run pytest -q tests/
 
-# Regenerate the hash-pinned lint/type lock (runtime deps + ruff + mypy).
-lock:
-	$(PYTHON) -m piptools compile --generate-hashes \
-		--extra lint \
-		--output-file requirements-lint.lock pyproject.toml
+# Tests against the RedSys test environment; needs network access.
+live:
+	REDSYS_LIVE=1 uv run --extra http pytest -q tests/test_live.py
