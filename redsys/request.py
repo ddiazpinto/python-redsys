@@ -1,166 +1,63 @@
-import re
-from decimal import Decimal
-from typing import Any
-from typing import Dict
+# Wire field names of the request/response envelope.
+SIGNATURE_VERSION = 'Ds_SignatureVersion'
+MERCHANT_PARAMETERS = 'Ds_MerchantParameters'
+SIGNATURE = 'Ds_Signature'
 
-from redsys.constants import CURRENCIES
-from redsys.constants import LANGUAGES
-from redsys.constants import TRANSACTIONS
 
-# General parameters
-MERCHANT_CODE = "Ds_Merchant_MerchantCode"
-TERMINAL = "Ds_Merchant_Terminal"
-TRANSACTION_TYPE = "Ds_Merchant_TransactionType"
-ORDER = "Ds_Merchant_Order"
-CURRENCY = "Ds_Merchant_Currency"
-AMOUNT = "Ds_Merchant_Amount"
-
-# Recurring transaction parameters
-SUM_TOTAL = "Ds_Merchant_SumTotal"
-DATE_FREQUENCY = "Ds_Merchant_DateFrecuency"
-CHARGE_EXPIRY_DATE = "Ds_Merchant_ChargeExpiryDate"
-TRANSACTION_DATE = "Ds_Merchant_TransactionDate"
-AUTHORIZATION_CODE = "Ds_Merchant_AuthorisationCode"
-
-# Optional parameters
-MERCHANT_DATA = "Ds_Merchant_MerchantData"
-
-# Redirect client paramenters
-MERCHANT_NAME = "Ds_Merchant_MerchantName"
-PRODUCT_DESCRIPTION = "Ds_Merchant_ProductDescription"
-TITULAR = "Ds_Merchant_Titular"
-MERCHANT_URL = "Ds_Merchant_MerchantURL"
-URL_OK = "Ds_Merchant_UrlOK"
-URL_KO = "Ds_Merchant_UrlKO"
-CONSUMER_LANGUAGE = "Ds_Merchant_ConsumerLanguage"
-
-# Credit card data parameters
-PAN = "Ds_Merchant_Pan"
-EXPIRY_DATE = "Ds_Merchant_ExpiryDate"
-CVV2 = "Ds_Merchant_Cvv2"
-
-# BIZUM PAYMENT parameters
-MOBILE_NUMBER = "Ds_Merchant_Bizum_MobileNumber"
-PAYMENT_METHOD = "Ds_Merchant_PayMethods"
-
-MERCHANT_PARAMETERS_MAP = {
-    "merchant_code": MERCHANT_CODE,
-    "terminal": TERMINAL,
-    "transaction_type": TRANSACTION_TYPE,
-    "order": ORDER,
-    "currency": CURRENCY,
-    "amount": AMOUNT,
-    "sum_total": SUM_TOTAL,
-    "date_frequency": DATE_FREQUENCY,
-    "charge_expiry_date": CHARGE_EXPIRY_DATE,
-    "transaction_date": TRANSACTION_DATE,
-    "authorization_code": AUTHORIZATION_CODE,
-    "merchant_data": MERCHANT_DATA,
-    "merchant_name": MERCHANT_NAME,
-    "product_description": PRODUCT_DESCRIPTION,
-    "titular": TITULAR,
-    "merchant_url": MERCHANT_URL,
-    "url_ok": URL_OK,
-    "url_ko": URL_KO,
-    "consumer_language": CONSUMER_LANGUAGE,
-    "pan": PAN,
-    "expiry_date": EXPIRY_DATE,
-    "cvv2": CVV2,
-    "mobile_number": MOBILE_NUMBER,
-    "payment_method": PAYMENT_METHOD,
-}
+def _as_text(value):
+    return value.decode('utf-8') if isinstance(value, (bytes, bytearray)) else value
 
 
 class Request:
+    """A signed request, ready to serialize or send -- the return of every operation.
+
+    Holds the three fields RedSys exchanges (the Base64 merchant parameters, the
+    signature over them, and the signature version) and the two ways to hand it
+    off:
+
+    - ``to_dict()`` -- the three ``Ds_*`` fields to POST (redirect form fields or
+      REST JSON body). Always available.
+    - ``send()`` -- performs the REST call and returns the parsed ``Response``.
+      Only direct-connection clients bind a sender; for redirect requests (the
+      browser submits them) it raises ``TypeError`` -- use ``to_dict()``.
+
+    Async clients bind an awaitable sender, so ``await request.send()`` works.
     """
-    Defines an atomic request with all the required parameters and sanitize
-    their values according to the platform specifications
-    """
 
-    _parameters: Dict[str, Any]
+    def __init__(self, merchant_parameters: bytes, signature: bytes, signature_version: str, *, sender=None):
+        self._merchant_parameters = merchant_parameters
+        self._signature = signature
+        self._signature_version = signature_version
+        self._sender = sender
 
-    def __init__(self, parameters: Dict[str, Any]) -> None:
-        # __setattr__ only handles merchant parameters, so the per-instance store is set directly.
-        object.__setattr__(self, "_parameters", {})
-        for key, value in parameters.items():
-            if key in MERCHANT_PARAMETERS_MAP:
-                if check := getattr(self, f"check_{str(key)}", None):
-                    check(value)
-                self._parameters[key] = value
-            else:
-                raise ValueError(f"Unknown parameter {key}")
+    @property
+    def merchant_parameters(self) -> bytes:
+        return self._merchant_parameters
 
-    def __getattr__(self, item: str) -> Any:
-        if item in MERCHANT_PARAMETERS_MAP:
-            return self._parameters.get(item)
+    @property
+    def signature(self) -> bytes:
+        return self._signature
 
-    def __setattr__(self, key, value):
-        if key in MERCHANT_PARAMETERS_MAP:
-            if check := getattr(self, "check_%s" % key, None):
-                check(value)
-            self._parameters[key] = value
+    @property
+    def signature_version(self) -> str:
+        return self._signature_version
 
-    def prepare_parameters(self) -> Dict[str, str]:
-        parameters = {}
-        for key, value in self._parameters.items():
-            prepare = getattr(self, "prepare_%s" % key, None)
-            parameters[MERCHANT_PARAMETERS_MAP[key]] = prepare(value) if prepare else value
-        return parameters
+    def to_dict(self) -> dict:
+        """The three wire fields (``Ds_SignatureVersion`` / ``Ds_MerchantParameters`` / ``Ds_Signature``)."""
+        return {
+            SIGNATURE_VERSION: self._signature_version,
+            MERCHANT_PARAMETERS: _as_text(self._merchant_parameters),
+            SIGNATURE: _as_text(self._signature),
+        }
 
-    @staticmethod
-    def prepare_amount(value):
-        return int(value * 100)
+    def send(self, **httpx_kwargs):
+        """Perform the direct (REST) call and return the parsed ``Response``.
 
-    @staticmethod
-    def prepare_sum_total(value):
-        return int(value * 100)
-
-    @staticmethod
-    def check_order(value):
-        if not re.match(r"[0-9]{4}[a-zA-Z0-9]{8}$", value):
-            raise ValueError("order format is not valid.")
-
-    @staticmethod
-    def check_transaction_type(value):
-        if value not in TRANSACTIONS:
-            raise ValueError("transaction_type is not valid.")
-
-    @staticmethod
-    def check_currency(value):
-        if value not in CURRENCIES:
-            raise ValueError("currency is not valid.")
-
-    @staticmethod
-    def check_amount(value):
-        if not isinstance(value, Decimal):
-            raise TypeError("amount must be defined as decimal.Decimal.")
-
-    @staticmethod
-    def check_sum_total(value):
-        if type(value) is not Decimal:
-            raise TypeError("sum_total must be defined as decimal.Decimal.")
-
-    @staticmethod
-    def check_merchant_data(value):
-        if len(value) > 1024:
-            raise ValueError("merchant_data cannot be longer than 1024 characters.")
-
-    @staticmethod
-    def check_merchant_url(value):
-        if len(value) > 250:
-            raise ValueError("merchant_url cannot be longer than 250 characters.")
-
-    @staticmethod
-    def check_url_ok(value):
-        if len(value) > 250:
-            raise ValueError("url_ok cannot be longer than 250 characters.")
-
-    @staticmethod
-    def check_url_ko(value):
-        if len(value) > 250:
-            raise ValueError("url_ko cannot be longer than 250 characters.")
-
-    @staticmethod
-    def check_consumer_language(value):
-        if value not in LANGUAGES:
-            raise ValueError("consumer_language is not valid.")
+        Raises ``TypeError`` for redirect requests, which the browser submits;
+        use ``to_dict()`` to get their POST parameters instead.
+        """
+        if self._sender is None:
+            raise TypeError(
+                'Redirect requests are submitted by the browser; call to_dict() to obtain the POST parameters.'
+            )
+        return self._sender(self, **httpx_kwargs)
