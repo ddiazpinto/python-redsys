@@ -1,7 +1,23 @@
+# Install once with:  pip install -e ".[dev]" && pre-commit install
+# The ruff/mypy hooks use the locally installed tools so versions match the dev env.
 repos:
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.1.3
+  - repo: local
     hooks:
       - id: ruff
-        args: [--fix, --exit-non-zero-on-fix]
+        name: ruff (lint)
+        entry: ruff check --fix
+        language: system
+        types: [python]
+        require_serial: true
       - id: ruff-format
+        name: ruff (format)
+        entry: ruff format
+        language: system
+        types: [python]
+        require_serial: true
+      - id: mypy
+        name: mypy
+        entry: mypy redsys
+        language: system
+        types: [python]
+        pass_filenames: false
