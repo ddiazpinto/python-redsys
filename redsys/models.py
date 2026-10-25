@@ -121,7 +121,19 @@ class BaseRequest(BaseModel):
         return b64encode(dumps(self.prepare_parameters(), sort_keys=True).encode('utf-8'))
 
 
-class _RedirectFields(BaseModel):
+class _StoredCredentialFields(BaseModel):
+    """Tokenization and credential-on-file fields, accepted by both connections."""
+
+    identifier: str | None = Field(
+        None, alias='Ds_Merchant_Identifier', max_length=40, description='Stored-card token; see redsys.api.cof.'
+    )
+    direct_payment: str | None = Field(None, alias='Ds_Merchant_DirectPayment', description='"true" or "moto".')
+    cof_ini: str | None = Field(None, alias='Ds_Merchant_Cof_Ini', max_length=1, description='See redsys.api.cof.')
+    cof_type: str | None = Field(None, alias='Ds_Merchant_Cof_Type', max_length=1, description='See redsys.api.cof.')
+    cof_txnid: str | None = Field(None, alias='Ds_Merchant_Cof_Txnid', max_length=15)
+
+
+class _RedirectFields(_StoredCredentialFields):
     """Fields of the redirect connection (browser form)."""
 
     merchant_url: str | None = Field(None, alias='Ds_Merchant_MerchantURL', max_length=250)
@@ -141,24 +153,20 @@ class _RedirectFields(BaseModel):
     )
 
 
-class _DirectFields(BaseModel):
+class _DirectFields(_StoredCredentialFields):
     """Fields of the direct connection (server-to-server card data, 3DS, stored credentials)."""
 
     pan: str | None = Field(None, alias='Ds_Merchant_Pan', max_length=19, pattern=r'^[0-9]{12,19}$')
     expiry_date: str | None = Field(None, alias='Ds_Merchant_ExpiryDate', pattern=r'^[0-9]{4}$', description='YYMM.')
     cvv2: str | None = Field(None, alias='Ds_Merchant_Cvv2', pattern=r'^[0-9]{3,4}$')
-    identifier: str | None = Field(
-        None, alias='Ds_Merchant_Identifier', max_length=40, description='Stored-card token; see redsys.api.cof.'
-    )
     idoper: str | None = Field(None, alias='Ds_Merchant_Idoper', max_length=40, description='inSite operation token.')
-    direct_payment: str | None = Field(None, alias='Ds_Merchant_DirectPayment', description='"true" or "moto".')
     emv3ds: dict[str, Any] | None = Field(None, alias='Ds_Merchant_EMV3DS', description='Build with redsys.threeds.')
-    cof_ini: str | None = Field(None, alias='Ds_Merchant_Cof_Ini', max_length=1, description='See redsys.api.cof.')
-    cof_type: str | None = Field(None, alias='Ds_Merchant_Cof_Type', max_length=1, description='See redsys.api.cof.')
-    cof_txnid: str | None = Field(None, alias='Ds_Merchant_Cof_Txnid', max_length=15)
     # RedSys spells the wire name "Frecuency".
     date_frequency: str | None = Field(None, alias='Ds_Merchant_DateFrecuency', description='Days between charges.')
     charge_expiry_date: str | None = Field(None, alias='Ds_Merchant_ChargeExpiryDate', description='yyyy-MM-dd.')
+    dcc: str | dict[str, Any] | None = Field(
+        None, alias='Ds_Merchant_DCC', description='"Y" on the 3DS initialization; then the accepted offer.'
+    )
     excep_sca: str | None = Field(
         None,
         alias='Ds_Merchant_Excep_SCA',
@@ -257,6 +265,7 @@ class Response(BaseModel):
         None, alias='Ds_Excep_SCA', description='Exemptions the card allows, from the 3DS initialization.'
     )
     emv3ds: dict[str, Any] | None = Field(None, alias='Ds_EMV3DS')
+    dcc: dict[str, Any] | None = Field(None, alias='Ds_DCC', description='Offer from the 3DS initialization.')
     identifier: str | None = Field(None, alias='Ds_Merchant_Identifier', description='Token returned on request.')
     cof_txnid: str | None = Field(None, alias='Ds_Merchant_Cof_Txnid')
     processed_pay_method: str | None = Field(None, alias='Ds_ProcessedPayMethod', description='68 = Bizum.')

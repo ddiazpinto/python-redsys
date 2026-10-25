@@ -35,7 +35,7 @@ After changing dependencies in `pyproject.toml`, run `uv lock` and commit `uv.lo
 
 ## Live tests
 
-`tests/test_live.py` runs the direct connection end to end against the RedSys test environment with RedSys's public test merchant: 3DS initialization, a payment that requires SCA, a challenged payment through RedSys's simulator ACS, and a refund, once per signature version. It needs network access and runs only on request:
+`tests/test_live.py` runs the direct connection end to end against the RedSys test environment with RedSys's public test merchant: 3DS initialization, a payment that requires SCA, a challenged payment through RedSys's simulator ACS and its refund, and a stored-card token charged as a merchant-initiated payment, once per signature version. It needs network access and runs only on request:
 
 ```bash
 make live   # REDSYS_LIVE=1 uv run --extra http pytest -q tests/test_live.py

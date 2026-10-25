@@ -344,3 +344,16 @@ def test_response_card_number_from_redirect_and_rest_names():
     rest = _response(Ds_Response='0000', Ds_Order='1', Ds_CardNumber='454881******0003')
     assert redirect.card_number == rest.card_number == '454881******0003'
     assert redirect.model_extra == {}
+
+
+def test_response_dcc_object():
+    resp = _response(Ds_Order='1', Ds_DCC={'InfoMonedaTarjeta': {'monedaDCC': '840'}})
+    assert resp.dcc == {'InfoMonedaTarjeta': {'monedaDCC': '840'}}
+    assert resp.model_extra == {}
+
+
+def test_redirect_accepts_stored_credential_fields():
+    params = _valid(identifier='REQUIRED', cof_ini='S', cof_type='R', direct_payment='true').prepare_parameters()
+    assert params['Ds_Merchant_Identifier'] == 'REQUIRED'
+    assert (params['Ds_Merchant_Cof_Ini'], params['Ds_Merchant_Cof_Type']) == ('S', 'R')
+    assert params['Ds_Merchant_DirectPayment'] == 'true'
