@@ -2,6 +2,38 @@
 
 All notable changes to this project. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) with [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+2.0 is a rewrite with a new API; see [`docs/migration-1x-to-2x.md`](docs/migration-1x-to-2x.md). 1.x receives fixes until 2026-12-31.
+
+### Added
+
+- Direct connection (REST) with `DirectClient` and `AsyncDirectClient`; `send()` needs the optional `http` extra (`httpx`).
+- 3-D Secure v2: `inicia()`, the `redsys.threeds` builders and the 3DS accessors on `Response`.
+- Signature versions `HMAC_SHA512_V2` and `HMAC_SHA512_V1`, alongside the legacy `HMAC_SHA256_V1`.
+- Tokenization and recurring payments (COF/MIT), inSite tokens (`idoper`), Bizum on the redirect connection and the PSD2 SCA exemption (`excep_sca`, `redsys.sca`).
+- Response fields for language, card typology, ECI, response description, Bizum, DCC, amount in euros and processed payment method. Parameters the library does not list are kept in `Response.model_extra`.
+- Reference documents for both connections, response codes and the migration from 1.x; `SECURITY.md`, `CONTRIBUTING.md` and `CONTRIBUTORS.md`.
+- Type hints (`py.typed`), CI on Python 3.10 to 3.15, and opt-in live tests against the RedSys test environment.
+
+### Changed
+
+- **Breaking:** new API. The client holds the account identity; `payment()`, `preauthorization()`, `confirmation()`, `refund()` and `cancellation()` return a signed `Request` (`to_dict()` or `send()`), and `parse_response()` verifies and parses. The module is `redsys.clients` (was `redsys.client`).
+- **Breaking:** requests are Pydantic models validated on construction. A 1.x or misspelled field name raises `ValidationError`; an unmodeled `Ds_Merchant_*` wire name is sent as given with an `UnknownParameterWarning`.
+- **Breaking:** response predicates are methods (`is_paid()`), `code` is `response_code`, and the Spanish `message` is gone; meanings are in `docs/response-codes.md`.
+- **Breaking:** Python 3.10 or later; `cryptography` and `pydantic` replace `pycryptodome`.
+- The default signature version is `HMAC_SHA512_V2`.
+- Relicensed from MIT to Apache-2.0.
+
+### Fixed
+
+- Amounts scale by the currency's minor-unit exponent: JPY and CLP amounts are no longer multiplied by 100.
+
+### Security
+
+- Response signatures are compared in constant time.
+- Releases are published to PyPI through Trusted Publishing, with attestations.
+
 ## [1.2.2] - 2026-10-17
 
 ### Fixed
