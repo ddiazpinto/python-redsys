@@ -40,7 +40,8 @@ lint = ["ruff", "mypy"]
 dev = [
     { include-group = "test" },
     { include-group = "lint" },
-    "pre-commit",
+    # filelock releases with the 2026 security fixes need Python 3.11; pre-commit pulls it in.
+    "pre-commit; python_version >= '3.11'",
 ]
 
 [tool.setuptools.packages.find]
