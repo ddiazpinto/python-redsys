@@ -4,6 +4,12 @@ All notable changes to this project. Format follows [Keep a Changelog](https://k
 
 ## [Unreleased]
 
+### Added
+
+- Transaction types 11, 38 and 44 to 48 from RedSys's table, usable through `client.request()`; 45 to 47 build cancellation messages and 48 a confirmation.
+- Dynamic currency conversion: `dcc` on direct requests (`Ds_Merchant_DCC`) and `Response.dcc` (`Ds_DCC`).
+- Tokenization and credential-on-file fields (`identifier`, `cof_*`, `direct_payment`) on redirect requests, as the redirect reference documents.
+
 ### Fixed
 
 - `Response.card_number` reads redirect notifications, which name the field `Ds_Card_Number` (REST uses `Ds_CardNumber`); it was left in `model_extra`.

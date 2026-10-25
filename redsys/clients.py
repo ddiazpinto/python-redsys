@@ -209,6 +209,11 @@ class _DirectBase(Client):
         transactions.CONFIRMATION: ConfirmationMessage,
         transactions.REFUND: RefundMessage,
         transactions.CANCELLATION: CancellationMessage,
+        transactions.REPLACEMENT_PREAUTHORIZATION: DirectPreauthorizationMessage,
+        transactions.PARTIAL_CONFIRMATION: ConfirmationMessage,
+        transactions.PAYMENT_CANCELLATION: CancellationMessage,
+        transactions.REFUND_CANCELLATION: CancellationMessage,
+        transactions.AUTHENTICATION_CONFIRMATION_CANCELLATION: CancellationMessage,
     }
 
     @property

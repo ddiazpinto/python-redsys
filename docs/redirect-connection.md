@@ -144,15 +144,16 @@ The library returns the raw `Ds_Response` code (`Response.response_code`) and do
 | 7 | Card validation (authentication only) |
 | 8 | Authentication confirmation |
 | 9 | Preauthorization cancellation |
-| 11 | Preauthorization extension |
+| 11 | Replacement preauthorization (extends a preauthorization) |
 | 15 | PayGold request (payment link) |
 | 17 | PUCE authentication |
 | 34 | Refund without original |
 | 37 | Gambling prize |
+| 38 | PayGold authorization (sent by RedSys) |
 | 44 | Delete token reference |
-| 45 | Payment cancellation (48h) |
+| 45 | Payment cancellation |
 | 46 | Refund cancellation (48h) |
-| 47 | Confirmation cancellation (48h) |
+| 47 | Authentication confirmation cancellation |
 | 48 | Partial preauthorization confirmation |
 
 ## Test environment

@@ -27,7 +27,7 @@ Requires Python 3.10+. Runtime dependencies: `cryptography` and `pydantic` (v2).
 | Python | 3.10 to 3.15 |
 | RedSys documents followed | Redirection guide 4.2 (2026-02-04), REST guide 4.0.1 (2025-10-17), Bizum guide 2.6 (2026-08-25) |
 | Signature versions | `HMAC_SHA512_V2` (default), `HMAC_SHA512_V1`, `HMAC_SHA256_V1` |
-| Verified against the RedSys test environment | Redirect connection in a browser, with the 3DS challenge, for all three signature versions (2026-10-25); direct connection end to end (3DS initialization, challenged payment, refund) on demand by the *Live* workflow |
+| Verified against the RedSys test environment | Redirect connection in a browser, with the 3DS challenge, for all three signature versions (2026-10-25); direct connection end to end (3DS initialization, challenged payment, refund, stored-card token charged as a merchant-initiated payment) on demand by the *Live* workflow |
 | Not yet verified live | Frictionless 3DS and the 3DSMethod step |
 
 ## Upgrading from 1.x
@@ -176,7 +176,7 @@ client.payment(
 ).send()
 ```
 
-`redsys.cof` provides the indicator constants (`INITIAL`/`SUBSEQUENT`, `RECURRING`/`INSTALLMENT`/...) and the `REQUEST_TOKEN` sentinel. The periodic fields (`sum_total`, `date_frequency`, `charge_expiry_date`) are also accepted by `DirectClient.payment()`. `redsys.sca` holds the PSD2 exemption codes for `excep_sca` (`LWV`, `TRA`, `MIT`, `COR`, `ATD`); `sca.QUERY` on `inicia()` asks which exemptions the card allows, returned in `response.excep_sca`.
+`redsys.cof` provides the indicator constants (`INITIAL`/`SUBSEQUENT`, `RECURRING`/`INSTALLMENT`/...) and the `REQUEST_TOKEN` sentinel. The token and COF fields are also accepted by `RedirectClient.payment()`, so the first payment can run on the RedSys page. The periodic fields (`sum_total`, `date_frequency`, `charge_expiry_date`) are accepted by `DirectClient.payment()`. `redsys.sca` holds the PSD2 exemption codes for `excep_sca` (`LWV`, `TRA`, `MIT`, `COR`, `ATD`); `sca.QUERY` on `inicia()` asks which exemptions the card allows, returned in `response.excep_sca`.
 
 ## Signature versions
 

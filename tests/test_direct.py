@@ -35,6 +35,12 @@ def _client(cls=DirectClient, **overrides):
     return cls(SECRET, **params)
 
 
+def _decoded_params(request):
+    from redsys.models import decode_merchant_parameters
+
+    return decode_merchant_parameters(request.merchant_parameters)
+
+
 def _payment(client):
     return client.payment(
         order=ORDER,
@@ -169,3 +175,20 @@ def test_async_inicia_posts_and_parses():
     assert response.is_paid()
     assert captured['url'] == 'https://sis-t.redsys.es:25443/sis/rest/iniciaPeticionREST'
     assert set(captured['json']) == {SIGNATURE_VERSION, MERCHANT_PARAMETERS, SIGNATURE}
+
+
+def test_extra_transaction_types_build_on_their_message():
+    from redsys import transactions
+
+    client = DirectClient('sq7HjrUOBfKmC576ILgskD5srU870gJ7', merchant_code='999008881', terminal=1, sandbox=True)
+    for code in (11, 44, 45, 46, 47, 48):
+        assert code in transactions.TRANSACTION_TYPES
+        request = client.request(code, order='000000000001', amount=Decimal('1.00'), currency=978)
+        assert _decoded_params(request)['Ds_Merchant_TransactionType'] == code
+
+
+def test_dcc_passes_through_request_and_response():
+    client = DirectClient('sq7HjrUOBfKmC576ILgskD5srU870gJ7', merchant_code='999008881', terminal=1, sandbox=True)
+    offer = {'monedaDCC': '840', 'importeDCC': '117'}
+    request = client.payment(order='000000000001', amount=Decimal('1.00'), currency=978, dcc=offer)
+    assert _decoded_params(request)['Ds_Merchant_DCC'] == offer

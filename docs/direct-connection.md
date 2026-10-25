@@ -55,12 +55,12 @@ Direct connection uses the same `Ds_Merchant_*` set as redirect (see the redirec
 | `Ds_Merchant_Cvv2` | N, 3-4 | Card security code. |
 | `Ds_Merchant_Identifier` | N, 40 | Stored-card token (alternative to raw card data). |
 | `Ds_Merchant_AuthorisationCode` | AN, 6 | Required for some refunds/confirmations. |
-| `Ds_Merchant_TransactionDate` | AN, 10 | Operation date for deferred/recurring ops. |
 | `Ds_Merchant_SumTotal` | N | Total for recurring series (field length not documented). |
 | `Ds_Merchant_DateFrecuency` | N | Days between recurring charges (note RedSys's spelling "Frecuency"). |
 | `Ds_Merchant_ChargeExpiryDate` | date | End date for a recurring series. |
 | `Ds_Merchant_DirectPayment` | N | `true`/`moto` to influence authentication. |
 | `Ds_Merchant_Excep_SCA` | AN, 3 | PSD2 SCA exemption requested: `LWV`, `TRA`, `MIT`, `COR`, `ATD`; `Y` on iniciaPeticionREST asks which exemptions the card allows (answer in `Ds_Excep_SCA`). MIT also sends `Ds_Merchant_DirectPayment` = `true`. |
+| `Ds_Merchant_DCC` | A or JSON | Dynamic currency conversion: `Y` on iniciaPeticionREST asks for an offer (returned in `Ds_DCC`); the accepted offer goes back in the payment. |
 
 ## Signature
 

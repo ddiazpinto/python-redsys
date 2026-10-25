@@ -16,7 +16,7 @@ import pytest
 pytestmark = pytest.mark.skipif(os.environ.get('REDSYS_LIVE') != '1', reason='set REDSYS_LIVE=1 to run')
 httpx = pytest.importorskip('httpx')
 
-from redsys import currencies, threeds  # noqa: E402
+from redsys import cof, currencies, sca, threeds  # noqa: E402
 from redsys.clients import HMAC_SHA256_V1, HMAC_SHA512_V1, HMAC_SHA512_V2, DirectClient  # noqa: E402
 
 SECRET = 'sq7HjrUOBfKmC576ILgskD5srU870gJ7'
@@ -68,9 +68,8 @@ def test_live_payment_without_authentication_requires_sca(version):
     assert response.response_code == 195
 
 
-@pytest.mark.parametrize('version', VERSIONS)
-def test_live_challenged_payment_then_refund(version):
-    client, operation = _client(version), _operation()
+def _challenged_payment(client, operation, **fields):
+    """Initialization, authentication with the simulator's challenge, and the final authorization."""
     card_config = client.inicia(emv3ds=threeds.card_data(), **operation, **CARD).send()
     authentication = threeds.authentication_data(
         three_ds_server_trans_id=card_config.three_ds_server_trans_id,
@@ -79,13 +78,39 @@ def test_live_challenged_payment_then_refund(version):
         browser=BROWSER,
         three_ds_comp_ind='N',
     )
-    challenge = client.payment(emv3ds=authentication, **operation, **CARD).send()
+    challenge = client.payment(emv3ds=authentication, **operation, **CARD, **fields).send()
     assert challenge.requires_challenge()
 
     cres = _answer_simulated_challenge(challenge)
     final = threeds.challenge_response(cres=cres, protocol_version=challenge.protocol_version)
-    payment = client.payment(emv3ds=final, **operation, **CARD).send()
+    return client.payment(emv3ds=final, **operation, **CARD, **fields).send()
+
+
+@pytest.mark.parametrize('version', VERSIONS)
+def test_live_challenged_payment_then_refund(version):
+    client, operation = _client(version), _operation()
+    payment = _challenged_payment(client, operation)
     assert payment.is_paid() and payment.authorization_code
 
     refund = client.refund(**operation).send()
     assert refund.is_refunded()
+
+
+@pytest.mark.parametrize('version', VERSIONS)
+def test_live_token_then_merchant_initiated_charge(version):
+    client = _client(version)
+    first = _challenged_payment(
+        client, _operation(), identifier=cof.REQUEST_TOKEN, cof_ini=cof.INITIAL, cof_type=cof.RECURRING
+    )
+    assert first.is_paid() and first.identifier and first.cof_txnid
+
+    charge = client.payment(
+        identifier=first.identifier,
+        cof_ini=cof.SUBSEQUENT,
+        cof_type=cof.RECURRING,
+        cof_txnid=first.cof_txnid,
+        excep_sca=sca.MIT,
+        direct_payment='true',
+        **_operation(),
+    ).send()
+    assert charge.is_paid()
