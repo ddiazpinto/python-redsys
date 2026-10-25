@@ -40,7 +40,9 @@ jobs:
         uses: codecov/codecov-action@v7
         with:
           files: coverage.xml
-          fail_ci_if_error: false
+          # Empty on fork pull requests, where Codecov accepts a tokenless upload for public repositories.
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: true
 
   # The declared minimums are what users may resolve to; prove them on the oldest and newest Python.
   lowest-dependencies:
