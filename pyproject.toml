@@ -60,6 +60,9 @@ select = ["E", "F", "I", "B", "UP"]
 [tool.ruff.format]
 quote-style = "single"
 
+[tool.coverage.report]
+fail_under = 95
+
 [tool.mypy]
 python_version = "3.10"
 ignore_missing_imports = true
