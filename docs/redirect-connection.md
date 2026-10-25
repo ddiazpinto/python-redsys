@@ -112,6 +112,7 @@ RedSys returns the result with the same three-field envelope (`Ds_SignatureVersi
 | `Ds_Card_Country` | N, 3 | Issuing country. |
 | `Ds_Card_Type` | AN, 1 | `C` credit, `D` debit, `V` voucher, `X` mixed. |
 | `Ds_Card_Brand` | N | 1 VISA, 2 Mastercard, 6 Diners, 7 Privada, 8 Amex, 9 JCB. |
+| `Ds_Card_Number` | AN | Masked card number (REST responses name it `Ds_CardNumber`; both read as `Response.card_number`). |
 | `Ds_ErrorCode` | AN, 7 | `SISxxxx` error code when applicable. |
 | `Ds_EMV3DS` | JSON | 3-D Secure authentication response data. |
 | `Ds_ProcessedPayMethod` | N, 3 | Payment method the operation was processed with (`68` = Bizum). |
