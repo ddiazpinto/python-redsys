@@ -24,9 +24,6 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      id-token: write # OIDC upload to Codecov, no stored token
     strategy:
       fail-fast: false
       matrix:
@@ -43,8 +40,8 @@ jobs:
         uses: codecov/codecov-action@v7
         with:
           files: coverage.xml
-          # Fork pull requests get no OIDC token; Codecov accepts their upload without one.
-          use_oidc: ${{ github.event_name == 'push' || !github.event.pull_request.head.repo.fork }}
+          # Empty on fork pull requests, where Codecov accepts a tokenless upload for public repositories.
+          token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: true
 
   # The declared minimums are what users may resolve to; prove them on the oldest and newest Python.
