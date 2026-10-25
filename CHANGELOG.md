@@ -2,7 +2,7 @@
 
 All notable changes to this project. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) with [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [2.0.0] - 2026-10-25
 
 2.0 is a rewrite with a new API; see [`docs/migration-1x-to-2x.md`](docs/migration-1x-to-2x.md). 1.x receives fixes until 2026-12-31.
 
