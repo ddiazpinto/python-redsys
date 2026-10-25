@@ -23,7 +23,7 @@ Requires Python 3.10+. Runtime dependencies: `cryptography` and `pydantic` (v2).
 
 | | |
 |---|---|
-| Version | 2.0.0; 1.x receives fixes until 2026-12-31 |
+| Version | 2.1.0; 1.x receives fixes until 2026-12-31 |
 | Python | 3.10 to 3.15 |
 | RedSys documents followed | Redirection guide 4.2 (2026-02-04), REST guide 4.0.1 (2025-10-17), Bizum guide 2.6 (2026-08-25) |
 | Signature versions | `HMAC_SHA512_V2` (default), `HMAC_SHA512_V1`, `HMAC_SHA256_V1` |

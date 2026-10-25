@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "python-redsys"
-version = "2.0.0"
+version = "2.1.0"
 description = "A simple, lightweight client to handle payments through the RedSys platform."
 readme = "README.md"
 requires-python = ">=3.10"

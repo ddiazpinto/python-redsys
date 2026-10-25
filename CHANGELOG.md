@@ -2,13 +2,17 @@
 
 All notable changes to this project. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) with [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [2.1.0] - 2026-10-25
 
 ### Added
 
 - Transaction types 11, 38 and 44 to 48 from RedSys's table, usable through `client.request()`; 45 to 47 build cancellation messages and 48 a confirmation.
 - Dynamic currency conversion: `dcc` on direct requests (`Ds_Merchant_DCC`) and `Response.dcc` (`Ds_DCC`).
 - Tokenization and credential-on-file fields (`identifier`, `cof_*`, `direct_payment`) on redirect requests, as the redirect reference documents.
+
+### Security
+
+- CI requires uv 0.13.4 or later and the release build pip 26.2.2 or later, the versions that stop trusting the compromised eMudhra intermediate CAs.
 
 ### Fixed
 
