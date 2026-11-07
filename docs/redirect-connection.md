@@ -52,7 +52,7 @@ Minimum required for a standard payment authorization (`transaction_type = 0`):
 | `Ds_Merchant_TransactionType` | N, 1+ | Operation code. `0` = standard authorization. See Transaction types. |
 | `Ds_Merchant_Amount` | N, up to 12 | Integer in the currency's minor unit (cents). EUR 2.49 -> `249`. |
 | `Ds_Merchant_Currency` | N, 4 | ISO-4217 numeric. EUR = `978`. |
-| `Ds_Merchant_Order` | AN, up to 12 | First 4 characters numeric; remainder alphanumeric. RedSys recommends 4+ leading digits to avoid collisions. |
+| `Ds_Merchant_Order` | AN, up to 12 | First 4 characters numeric; remainder alphanumeric. RedSys recommends 4+ leading digits to avoid collisions. `redsys.generate_order()` draws one. |
 
 Common optional parameters for redirect:
 
@@ -70,7 +70,7 @@ Common optional parameters for redirect:
 | `Ds_Merchant_Cof_Ini` / `Ds_Merchant_Cof_Type` / `Ds_Merchant_Cof_TxnId` | AN | Credential-on-file (recurring/tokenized) indicators. |
 | `Ds_Merchant_Excep_SCA` | AN, 3 | PSD2 SCA exemption requested: `LWV`, `TRA`, `MIT`, `COR`, `ATD` (REST guide 4.0.1); constants in `redsys.sca`. |
 | `Ds_Merchant_DirectPayment` | N | `true` or `moto` to influence authentication. |
-| `Ds_Merchant_PayMethods` | A | Payment method offered on the payment page; `z` = Bizum. |
+| `Ds_Merchant_PayMethods` | A | Payment method offered on the payment page; `z` = Bizum. Values in `redsys.pay_methods`. |
 | `Ds_Merchant_Bizum_MobileNumber` | AN, 19 | Customer phone number prefilled on the Bizum page; editable by the customer. |
 
 The full authoritative parameter list (including PayGold, DCC, financing, xPay/Google-Apple Pay, Bizum, and the `Ds_Merchant_EMV3DS` 3-D Secure object) is on the portal's "Parámetros de entrada y salida" page; see Sources.

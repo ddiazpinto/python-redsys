@@ -84,7 +84,9 @@ post_parameters = request.to_dict()  # Ds_SignatureVersion / Ds_MerchantParamete
 
 The redirect connection takes `payment()`, `preauthorization()`, `authentication()` and `refund_without_original()`; any other transaction type raises `ValidationError`.
 
-Bizum: add `pay_methods="z"` (and optionally `bizum_mobile_number`) to the payment.
+`redsys.generate_order()` returns a random order number: 4 digits, then letters and digits, 12 characters unless `length` (4 to 12) says otherwise.
+
+Bizum: add `pay_methods=pay_methods.BIZUM` (`"z"`, and optionally `bizum_mobile_number`) to the payment. `redsys.pay_methods` holds the other payment-method values.
 
 ### 2. Communication step
 

@@ -153,7 +153,7 @@ class _RedirectFields(_StoredCredentialFields):
     product_description: str | None = Field(None, alias='Ds_Merchant_ProductDescription', max_length=125)
     titular: str | None = Field(None, alias='Ds_Merchant_Titular', max_length=60)
     consumer_language: int | None = Field(None, alias='Ds_Merchant_ConsumerLanguage')
-    pay_methods: str | None = Field(None, alias='Ds_Merchant_PayMethods', description='"z" selects Bizum.')
+    pay_methods: str | None = Field(None, alias='Ds_Merchant_PayMethods', description='See redsys.api.pay_methods.')
     bizum_mobile_number: str | None = Field(None, alias='Ds_Merchant_Bizum_MobileNumber', max_length=19)
     excep_sca: str | None = Field(
         None,
