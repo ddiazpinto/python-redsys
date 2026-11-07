@@ -21,3 +21,11 @@ EXEMPTIONS = (LWV, TRA, MIT, COR, ATD)
 
 QUERY = 'Y'
 """Sent on the 3DS initialization to ask which exemptions the card allows; the answer comes back in Ds_Excep_SCA."""
+
+NO_QUERY = 'N'
+"""Sent on the 3DS initialization to ask for no exemptions."""
+
+QUERIES = (QUERY, NO_QUERY)
+
+WHITELIST = 'WHL'
+"""In Ds_Excep_SCA only: the merchant is on the customer's trusted list, so no authentication is needed."""

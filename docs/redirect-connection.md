@@ -65,11 +65,11 @@ Common optional parameters for redirect:
 | `Ds_Merchant_ProductDescription` | AN, 125 | Shown to the cardholder. |
 | `Ds_Merchant_Titular` | AN, 60 | Cardholder name. |
 | `Ds_Merchant_MerchantData` | AN, 1024 | Opaque merchant data, echoed back in the response. |
-| `Ds_Merchant_ConsumerLanguage` | N, 3 | Language code; `0` = undetermined. |
+| `Ds_Merchant_ConsumerLanguage` | N, 3 | Language code; `0` = undetermined; `redsys.languages`. |
 | `Ds_Merchant_Identifier` | N, 40 | Card reference token, or the literal `REQUIRED` to request a new token. |
 | `Ds_Merchant_Cof_Ini` / `Ds_Merchant_Cof_Type` / `Ds_Merchant_Cof_TxnId` | AN | Credential-on-file (recurring/tokenized) indicators. |
 | `Ds_Merchant_Excep_SCA` | AN, 3 | PSD2 SCA exemption requested: `LWV`, `TRA`, `MIT`, `COR`, `ATD` (REST guide 4.0.1); constants in `redsys.sca`. |
-| `Ds_Merchant_DirectPayment` | N | `true` or `moto` to influence authentication. |
+| `Ds_Merchant_DirectPayment` | N | `true` or `moto` to influence authentication; `redsys.options`. |
 | `Ds_Merchant_PayMethods` | A | Payment method offered on the payment page; `z` = Bizum. Values in `redsys.pay_methods`. |
 | `Ds_Merchant_Bizum_MobileNumber` | AN, 19 | Customer phone number prefilled on the Bizum page; editable by the customer. |
 | `Ds_Merchant_Group` | N, 9 | Group that shares card references; with `Ds_Merchant_Identifier`. |
@@ -121,15 +121,15 @@ RedSys returns the result with the same three-field envelope (`Ds_SignatureVersi
 | `Ds_AuthorisationCode` | AN, 6 | Issuer authorization code (on success). |
 | `Ds_Date` | dd/mm/yyyy | Transaction date. |
 | `Ds_Hour` | HH:mm | Transaction time. |
-| `Ds_SecurePayment` | N, 1 | 0 unsafe, 1 partial, 2 secure (3DS). |
+| `Ds_SecurePayment` | N, 1 | 0 unsafe, 1 partial, 2 secure (3DS); `redsys.secure_payment`. |
 | `Ds_MerchantData` | AN, 1024 | Echoed merchant data. |
 | `Ds_Card_Country` | N, 3 | Issuing country. |
-| `Ds_Card_Type` | AN, 1 | `C` credit, `D` debit, `V` voucher, `X` mixed. |
-| `Ds_Card_Brand` | N | 1 VISA, 2 Mastercard, 6 Diners, 7 Privada, 8 Amex, 9 JCB. |
+| `Ds_Card_Type` | AN, 1 | `C` credit, `D` debit, `V` voucher, `X` mixed; `redsys.cards`. |
+| `Ds_Card_Brand` | N | 1 VISA, 2 Mastercard, 6 Diners, 7 private label, 8 Amex, 9 JCB, 22 UPI; `redsys.cards`. |
 | `Ds_Card_Number` | AN | Masked card number (REST responses name it `Ds_CardNumber`; both read as `Response.card_number`). |
 | `Ds_ErrorCode` | AN, 7 | `SISxxxx` error code when applicable. |
 | `Ds_EMV3DS` | JSON | 3-D Secure authentication response data. |
-| `Ds_ProcessedPayMethod` | N, 3 | Payment method the operation was processed with (`68` = Bizum). |
+| `Ds_ProcessedPayMethod` | N, 3 | Payment method the operation was processed with (`68` = Bizum); `redsys.processed_pay_methods`. |
 | `Ds_Amount_Euro` | N, 12 | Amount in euros; only for operations in a currency other than the euro. |
 
 ## Response codes

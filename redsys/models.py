@@ -30,7 +30,7 @@ from pydantic import (
     model_validator,
 )
 
-from redsys.api import options, paygold, responses, transactions, xpay
+from redsys.api import emv3ds, options, paygold, responses, transactions, xpay
 from redsys.api.currencies import CURRENCIES, CURRENCY_DECIMALS, EUR
 from redsys.api.transactions import TRANSACTION_TYPES
 from redsys.codes import describe
@@ -134,7 +134,9 @@ class _StoredCredentialFields(BaseModel):
     identifier: str | None = Field(
         None, alias='Ds_Merchant_Identifier', max_length=40, description='Stored-card token; see redsys.api.cof.'
     )
-    direct_payment: str | None = Field(None, alias='Ds_Merchant_DirectPayment', description='"true" or "moto".')
+    direct_payment: str | None = Field(
+        None, alias='Ds_Merchant_DirectPayment', description='"true" or "moto"; see redsys.api.options.'
+    )
     cof_ini: str | None = Field(None, alias='Ds_Merchant_Cof_Ini', max_length=1, description='See redsys.api.cof.')
     cof_type: str | None = Field(None, alias='Ds_Merchant_Cof_Type', max_length=1, description='See redsys.api.cof.')
     cof_txnid: str | None = Field(None, alias='Ds_Merchant_Cof_Txnid', max_length=15)
@@ -453,7 +455,9 @@ class Response(BaseModel):
     dcc: dict[str, Any] | None = Field(None, alias='Ds_DCC', description='Offer from the 3DS initialization.')
     identifier: str | None = Field(None, alias='Ds_Merchant_Identifier', description='Token returned on request.')
     cof_txnid: str | None = Field(None, alias='Ds_Merchant_Cof_Txnid')
-    processed_pay_method: str | None = Field(None, alias='Ds_ProcessedPayMethod', description='68 = Bizum.')
+    processed_pay_method: str | None = Field(
+        None, alias='Ds_ProcessedPayMethod', description='See redsys.api.processed_pay_methods.'
+    )
     bizum_id_oper: str | None = Field(None, alias='Ds_Bizum_IdOper')
     bizum_cuenta_truncada: str | None = Field(None, alias='Ds_Bizum_CuentaTruncada')
     currency_dcc: str | None = Field(None, alias='Ds_Currency_DCC', description='Dynamic currency conversion.')
@@ -557,10 +561,10 @@ class Response(BaseModel):
         return self._emv3ds.get('creq')
 
     def is_no_3ds(self) -> bool:
-        return self.protocol_version == 'NO_3DS_V2'
+        return self.protocol_version == emv3ds.NO_3DS_V2
 
     def requires_challenge(self) -> bool:
-        return self._emv3ds.get('threeDSInfo') == 'ChallengeRequest'
+        return self._emv3ds.get('threeDSInfo') == emv3ds.CHALLENGE_REQUEST
 
 
 __all__ = [

@@ -11,10 +11,12 @@ Each function returns the dict to assign to a request's `emv3ds` field, e.g.
     response = client.inicia(..., emv3ds=threeds.card_data()).send()
 """
 
+from redsys.api import emv3ds
+
 
 def card_data() -> dict:
     """EMV3DS payload for the iniciaPeticionREST call (step 1)."""
-    return {'threeDSInfo': 'CardData'}
+    return {'threeDSInfo': emv3ds.CARD_DATA}
 
 
 def browser_info(
@@ -48,11 +50,11 @@ def browser_info(
 
 
 def authentication_data(
-    *, three_ds_server_trans_id, notification_url, protocol_version, browser, three_ds_comp_ind='Y'
+    *, three_ds_server_trans_id, notification_url, protocol_version, browser, three_ds_comp_ind=emv3ds.METHOD_COMPLETED
 ) -> dict:
     """EMV3DS payload for the authorization call (step 3). `browser` is `browser_info(...)`."""
     data = {
-        'threeDSInfo': 'AuthenticationData',
+        'threeDSInfo': emv3ds.AUTHENTICATION_DATA,
         'protocolVersion': protocol_version,
         'threeDSServerTransID': three_ds_server_trans_id,
         'notificationURL': notification_url,
@@ -64,4 +66,4 @@ def authentication_data(
 
 def challenge_response(*, cres, protocol_version) -> dict:
     """EMV3DS payload to finalize the authorization after the challenge (step 5)."""
-    return {'threeDSInfo': 'ChallengeResponse', 'protocolVersion': protocol_version, 'cres': cres}
+    return {'threeDSInfo': emv3ds.CHALLENGE_RESPONSE, 'protocolVersion': protocol_version, 'cres': cres}
