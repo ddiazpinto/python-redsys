@@ -18,6 +18,17 @@ Because direct connection skips RedSys's hosted pages, the merchant is responsib
 
 The integration (`sis-i.redsys.es:25443`) and development (`sis-d.redsys.es`) environments use the same paths; access to them depends on RedSys.
 
+Bizum Request-to-Pay uses its own paths on the same hosts, named in `redsys.environments`:
+
+| Constant | Path | Purpose |
+|----------|------|---------|
+| `RTP_CHECK_PATH` | `/sis/rest/RTP/checkRtpUsuario` | Whether the customer can receive a payment request |
+| `RTP_TRATA_PATH` | `/sis/rest/RTP/trataPeticionREST` | Payment (types 0 and 7), refund without original (34) |
+| `RTP_BACKUP_PATH` | `/sis/rest/RTP/respaldarUsuarioRTP` | Backup: sends the one-time password |
+| `RTP_BACKUP_VALIDATION_PATH` | `/sis/rest/RTP/validarRespaldoUsuarioRTP` | Backup: validates the one-time password |
+
+`endpoint=client.url(environments.RTP_TRATA_PATH)` on an operation sends it there; `endpoint=` takes any HTTPS URL and is not signed.
+
 ## REST (JSON) flavor
 
 The envelope is identical to the redirect method - three fields, same signature - but posted as JSON server-to-server and answered with JSON:

@@ -1,3 +1,4 @@
+import asyncio
 import os
 import sys
 from base64 import urlsafe_b64encode
@@ -124,6 +125,95 @@ def test_send_posts_to_the_request_endpoint():
     with mock.patch('httpx.post') as post, mock.patch.object(client, 'parse_response'):
         request.send()
     assert post.call_args.args == ('https://sis-d.redsys.es/sis/rest/trataPeticionREST',)
+
+
+RTP_TRATA = 'https://sis-t.redsys.es:25443/sis/rest/RTP/trataPeticionREST'
+
+
+def _direct(client_class=DirectClient):
+    return client_class(SECRET, merchant_code=MERCHANT_CODE, terminal=1, sandbox=True)
+
+
+def test_url_joins_the_environment_host_and_a_path():
+    client = _direct()
+    assert client.url(environments.RTP_TRATA_PATH) == RTP_TRATA
+    assert RedirectClient(SECRET, environment='DESA').url('/x') == 'https://sis-d.redsys.es/x'
+
+
+@pytest.mark.parametrize('path', ['sis/rest/x', '', None])
+def test_url_requires_an_absolute_path(path):
+    with pytest.raises(ValidationError):
+        _direct().url(path)
+
+
+def test_rtp_paths():
+    assert environments.RTP_CHECK_PATH == '/sis/rest/RTP/checkRtpUsuario'
+    assert environments.RTP_TRATA_PATH == '/sis/rest/RTP/trataPeticionREST'
+    assert environments.RTP_BACKUP_PATH == '/sis/rest/RTP/respaldarUsuarioRTP'
+    assert environments.RTP_BACKUP_VALIDATION_PATH == '/sis/rest/RTP/validarRespaldoUsuarioRTP'
+
+
+@pytest.mark.parametrize(
+    'client_class, method',
+    [
+        (RedirectClient, 'payment'),
+        (RedirectClient, 'authentication'),
+        (DirectClient, 'payment'),
+        (DirectClient, 'refund_without_original'),
+        (DirectClient, 'inicia'),
+        (DirectClient, 'inicia_payment'),
+        (AsyncDirectClient, 'refund'),
+    ],
+)
+def test_endpoint_option_replaces_the_request_endpoint_and_is_not_signed(client_class, method):
+    client = _direct(client_class)
+    request = getattr(client, method)(order=ORDER, amount=Decimal('10.56'), endpoint=RTP_TRATA)
+    plain = getattr(client, method)(order=ORDER, amount=Decimal('10.56'))
+    assert request.endpoint == RTP_TRATA
+    assert request.to_dict() == plain.to_dict()
+    assert client.endpoint != RTP_TRATA
+
+
+def test_endpoint_option_on_request_and_challenge_response():
+    client = _direct()
+    assert client.request(0, order=ORDER, amount=Decimal('1.00'), endpoint=RTP_TRATA).endpoint == RTP_TRATA
+    request = client.challenge_response(
+        cres='abc', protocol_version='2.1.0', order=ORDER, amount=Decimal('1.00'), endpoint=RTP_TRATA
+    )
+    assert request.endpoint == RTP_TRATA
+
+
+@pytest.mark.parametrize(
+    'endpoint',
+    ['http://sis-t.redsys.es:25443/sis/rest/RTP/trataPeticionREST', '/sis/rest/RTP/trataPeticionREST', 'https://', 7],
+)
+def test_endpoint_option_must_be_an_https_url(endpoint):
+    with pytest.raises(ValidationError):
+        _direct().payment(order=ORDER, amount=Decimal('1.00'), endpoint=endpoint)
+    with pytest.raises(ValidationError):
+        _direct().inicia(order=ORDER, amount=Decimal('1.00'), endpoint=endpoint)
+
+
+def test_send_posts_to_the_endpoint_option():
+    pytest.importorskip('httpx')
+    client = _direct()
+    request = client.payment(order=ORDER, amount=Decimal('1.00'), endpoint=client.url(environments.RTP_TRATA_PATH))
+    with mock.patch('httpx.post') as post, mock.patch.object(client, 'parse_response'):
+        request.send()
+    assert post.call_args.args == (RTP_TRATA,)
+
+
+def test_async_send_posts_to_the_endpoint_option():
+    pytest.importorskip('httpx')
+    client = _direct(AsyncDirectClient)
+    http_client = mock.MagicMock()
+    http_client.__aenter__ = mock.AsyncMock(return_value=http_client)
+    http_client.__aexit__ = mock.AsyncMock(return_value=None)
+    http_client.post = mock.AsyncMock()
+    request = client.refund(order=ORDER, amount=Decimal('1.00'), endpoint=RTP_TRATA)
+    with mock.patch('httpx.AsyncClient', return_value=http_client), mock.patch.object(client, '_parse_http_response'):
+        asyncio.run(request.send())
+    assert http_client.post.call_args.args == (RTP_TRATA,)
 
 
 # == API key ==

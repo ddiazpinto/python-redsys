@@ -18,6 +18,7 @@ from base64 import b64decode
 from hmac import compare_digest
 from logging import getLogger
 from re import fullmatch, sub
+from urllib.parse import urlsplit
 from warnings import warn
 
 from redsys import threeds
@@ -95,6 +96,17 @@ def _resolve_environment(environment: str | None, sandbox: bool | None) -> str:
     return environment
 
 
+def _endpoint_option(fields: dict) -> str | None:
+    """Pop a call's ``endpoint``, which is never signed; it must be an HTTPS URL."""
+    endpoint = fields.pop('endpoint', None)
+    if endpoint is None:
+        return None
+    parts = urlsplit(endpoint) if isinstance(endpoint, str) else None
+    if parts is None or parts.scheme != 'https' or not parts.netloc:
+        raise ValidationError('endpoint must be an https:// URL.')
+    return endpoint
+
+
 def _parse_api_key(api_key: str) -> tuple[str, str, int, str]:
     """Split an API key into (environment, merchant code, terminal, secret key).
 
@@ -146,7 +158,7 @@ class Client:
         self.environment = _resolve_environment(environment, sandbox)
         self.sandbox = self.environment != environments.PROD
         self.signature_version = signature_version
-        self.endpoint = self._url(self._PATH) if self._PATH else None
+        self.endpoint = self.url(self._PATH) if self._PATH else None
 
     @classmethod
     def from_api_key(cls, api_key: str, **options):
@@ -164,7 +176,10 @@ class Client:
             f'environment={self.environment!r}, signature_version={self.signature_version!r})'
         )
 
-    def _url(self, path: str) -> str:
+    def url(self, path: str) -> str:
+        """The client's environment host followed by ``path``, e.g. ``environments.RTP_TRATA_PATH``."""
+        if not isinstance(path, str) or not path.startswith('/'):
+            raise ValidationError('path must start with "/".')
         return f'{environments.HOSTS[self.environment]}{path}'
 
     # -- request building -------------------------------------------------
@@ -190,11 +205,15 @@ class Client:
         for transaction types without a dedicated method (e.g. ``REFUND_CANCELLATION``).
         Raises ``ValidationError`` if ``fields`` name a different transaction type, or if
         the connection does not accept it (the redirect connection takes 0, 1, 7 and 34).
+        Every operation takes ``endpoint=``, an HTTPS URL that replaces the client's for
+        that request only; it is not signed or sent as a parameter.
         """
         return self._operation(transaction_type, fields)
 
-    def _operation(self, transaction_type: int, fields: dict) -> Request:
-        return self._prepare(self._message(transaction_type, fields))
+    def _operation(self, transaction_type: int, fields: dict, endpoint: str | None = None) -> Request:
+        fields = dict(fields)
+        override = _endpoint_option(fields)
+        return self._prepare(self._message(transaction_type, fields), endpoint=override or endpoint)
 
     def _message(self, transaction_type: int, fields: dict):
         if self._TRANSACTION_TYPES is not None and transaction_type not in self._TRANSACTION_TYPES:
@@ -205,8 +224,8 @@ class Client:
                 raise ValidationError(f'{name} contradicts the operation, transaction type {transaction_type}.')
         return self._model_for(transaction_type)(**data, transaction_type=transaction_type)
 
-    def _prepare(self, model) -> Request:
-        return self._build_request(model, endpoint=self.endpoint)
+    def _prepare(self, model, endpoint: str | None = None) -> Request:
+        return self._build_request(model, endpoint=endpoint or self.endpoint)
 
     def _build_request(
         self, model, signature_version: str | None = None, sender=None, endpoint: str | None = None
@@ -306,7 +325,7 @@ class _DirectBase(Client):
 
     @property
     def inicia_endpoint(self) -> str:
-        return self._url(environments.INICIA_PATH)
+        return self.url(environments.INICIA_PATH)
 
     def payment(self, **fields) -> Request:
         return self._operation(transactions.AUTHORIZATION, fields)
@@ -363,8 +382,10 @@ class _DirectBase(Client):
 
     def inicia(self, **fields) -> Request:
         """3-D Secure step 1: build a request bound to the iniciaPeticionREST endpoint."""
+        fields = dict(fields)
+        endpoint = _endpoint_option(fields)
         model = self._DEFAULT_MODEL(**self._inject(fields))
-        return self._prepare(model, endpoint=self.inicia_endpoint)
+        return self._prepare(model, endpoint=endpoint or self.inicia_endpoint)
 
     def inicia_payment(self, **fields) -> Request:
         """3-D Secure step 1 for a payment; ``emv3ds`` defaults to ``threeds.card_data()``."""
@@ -381,7 +402,7 @@ class _DirectBase(Client):
     def _inicia(self, transaction_type: int, fields: dict) -> Request:
         if 'emv3ds' not in fields and _EMV3DS_WIRE_NAME not in fields:
             fields['emv3ds'] = threeds.card_data()
-        return self._prepare(self._message(transaction_type, fields), endpoint=self.inicia_endpoint)
+        return self._operation(transaction_type, fields, endpoint=self.inicia_endpoint)
 
     def challenge_response(
         self, *, cres: str, protocol_version: str, transaction_type: int = transactions.AUTHORIZATION, **fields
