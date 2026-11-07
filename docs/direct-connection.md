@@ -88,6 +88,9 @@ Direct connection uses the same `Ds_Merchant_*` set as redirect (see the redirec
 | `Ds_Merchant_P2f_XmlData` | AN, 1000 | PayGold e-mail customization, XML tags in `redsys.paygold`. |
 | `Ds_Merchant_AltTransType` | N | `34` turns a PayGold link into a refund without original. |
 | `Ds_Merchant_PayMethods` / `Ds_Merchant_MerchantURL` | A / AN, 250 | Payment methods of a PayGold link page; notification URL. |
+| `DS_XPAYDATA` / `DS_XPAYDECODEDDATA` | AN, 10000 / JSON | Google Pay or Apple Pay payload, encrypted or decrypted by the merchant; one of them, with the two below. |
+| `DS_XPAYTYPE` | AN, 10 | `Google` or `Apple` (`redsys.xpay`). |
+| `DS_XPAYORIGEN` | AN, 5 | `WEB` or `InApp`. |
 
 ## Signature
 
