@@ -1,47 +1,49 @@
+"""ISO 4217 numeric codes for ``Ds_Merchant_Currency``."""
+
 EUR = 978
-"""Euro"""
+"""Euro."""
 
 USD = 840
-"""United States dollar"""
+"""United States dollar."""
 
 GBP = 826
-"""Pound sterling"""
+"""Pound sterling."""
 
 JPY = 392
-"""Japanese yen"""
+"""Japanese yen."""
 
 ARS = 32
-"""Argentine peso"""
+"""Argentine peso."""
 
 CAD = 124
-"""Canadian dollar"""
+"""Canadian dollar."""
 
 CLP = 152
-"""Chilean Peso"""
+"""Chilean peso."""
 
 COP = 170
-"""Colombian peso"""
+"""Colombian peso."""
 
 INR = 356
-"""Indian rupee"""
+"""Indian rupee."""
 
 MXN = 484
-"""Mexican peso"""
+"""Mexican peso."""
 
 PEN = 604
-"""Peruvian Sol"""
+"""Peruvian sol."""
 
 CHF = 756
-"""Swiss franc"""
+"""Swiss franc."""
 
 BRL = 986
-"""Brazilian real"""
+"""Brazilian real."""
 
 VEF = 937
-"""Venezuelan bolivar"""
+"""Venezuelan bolivar."""
 
 TRY = 949
-"""Turkish lira"""
+"""Turkish lira."""
 
 CURRENCIES = (
     EUR,
@@ -62,9 +64,7 @@ CURRENCIES = (
 )
 
 
-# Minor-unit exponent per ISO 4217 (number of decimal places); used to scale
-# Ds_Merchant_Amount. Unlisted currencies default to 2. The scaling factor is
-# derived from this table in redsys.models (minor_units_factor).
+# ISO 4217 minor-unit exponent: the decimals of ``amount`` on the wire; 2 for a currency not listed.
 CURRENCY_DECIMALS = {
     EUR: 2,
     USD: 2,

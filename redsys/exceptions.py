@@ -14,8 +14,8 @@ class ResponseError(RedsysError):
         super().__init__(f'RedSys returned error: {error_code}')
 
 
-class ValidationError(RedsysError):
-    """A parameter failed validation."""
+class ValidationError(RedsysError, ValueError):
+    """A client option or an operation's fields contradict each other or what RedSys accepts."""
 
 
 class UnknownParameterWarning(UserWarning):

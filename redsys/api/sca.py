@@ -1,4 +1,4 @@
-"""PSD2 strong customer authentication (SCA) exemption codes for Ds_Merchant_Excep_SCA (REST guide 4.0.1)."""
+"""PSD2 strong customer authentication (SCA) exemption codes for ``Ds_Merchant_Excep_SCA`` (REST guide 4.0.1)."""
 
 LWV = 'LWV'
 """Low-value transaction: up to 30 EUR, with issuer-side counters (5 operations or 100 EUR accumulated)."""
@@ -9,7 +9,7 @@ TRA = 'TRA'
 MIT = 'MIT'
 """Merchant-initiated transaction, no cardholder interaction (stored credentials, subscriptions).
 
-Sent together with direct_payment "true"."""
+Sent with ``direct_payment=options.DIRECT_PAYMENT``."""
 
 COR = 'COR'
 """Secure corporate payment, business-to-business only."""
@@ -20,7 +20,7 @@ ATD = 'ATD'
 EXEMPTIONS = (LWV, TRA, MIT, COR, ATD)
 
 QUERY = 'Y'
-"""Sent on the 3DS initialization to ask which exemptions the card allows; the answer comes back in Ds_Excep_SCA."""
+"""Sent on the 3DS initialization to ask which exemptions the card allows; the answer is ``Response.excep_sca``."""
 
 NO_QUERY = 'N'
 """Sent on the 3DS initialization to ask for no exemptions."""
@@ -28,4 +28,4 @@ NO_QUERY = 'N'
 QUERIES = (QUERY, NO_QUERY)
 
 WHITELIST = 'WHL'
-"""In Ds_Excep_SCA only: the merchant is on the customer's trusted list, so no authentication is needed."""
+"""In ``Ds_Excep_SCA`` only: the merchant is on the customer's trusted list, so no authentication is needed."""

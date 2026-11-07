@@ -1,14 +1,8 @@
-"""Builders for the Ds_Merchant_EMV3DS object used in 3-D Secure v2 (REST direct connection).
+"""Builders for the ``Ds_Merchant_EMV3DS`` object of 3-D Secure v2 on the direct connection.
 
-Flow: inicia (`card_data`) -> [3DSMethod (`method_data`)] -> authorize (`authentication_data`) ->
-[challenge] -> finalize (`challenge_response`). See docs/direct-connection.md. The
-EMV3DS sub-field names are case-sensitive and passed through verbatim.
+The step numbers follow docs/direct-connection.md. The sub-field names are case-sensitive.
 
-Each function returns the dict to assign to a request's `emv3ds` field, e.g.
-
-    from redsys import threeds
-
-    response = client.inicia(..., emv3ds=threeds.card_data()).send()
+    client.payment(emv3ds=threeds.authentication_data(..., three_ds_comp_ind=emv3ds.METHOD_COMPLETED), ...)
 """
 
 from base64 import urlsafe_b64encode
@@ -18,7 +12,7 @@ from redsys.api import emv3ds
 
 
 def card_data() -> dict:
-    """EMV3DS payload for the iniciaPeticionREST call (step 1)."""
+    """``emv3ds`` of the 3-D Secure initialization, iniciaPeticionREST (step 1)."""
     return {'threeDSInfo': emv3ds.CARD_DATA}
 
 
@@ -41,7 +35,7 @@ def browser_info(
     javascript_enabled=True,
     ip=None,
 ) -> dict:
-    """Cardholder browser data the merchant page collects for the authorization."""
+    """Cardholder browser data, collected by the merchant page, for ``authentication_data()``."""
     data = {
         'browserAcceptHeader': accept_header,
         'browserUserAgent': user_agent,
@@ -61,7 +55,7 @@ def browser_info(
 def authentication_data(
     *, three_ds_server_trans_id, notification_url, protocol_version, browser, three_ds_comp_ind=emv3ds.METHOD_COMPLETED
 ) -> dict:
-    """EMV3DS payload for the authorization call (step 3). `browser` is `browser_info(...)`."""
+    """``emv3ds`` of the authentication (step 3); ``browser`` is ``browser_info(...)``."""
     data = {
         'threeDSInfo': emv3ds.AUTHENTICATION_DATA,
         'protocolVersion': protocol_version,
@@ -74,5 +68,5 @@ def authentication_data(
 
 
 def challenge_response(*, cres, protocol_version) -> dict:
-    """EMV3DS payload to finalize the authorization after the challenge (step 5)."""
+    """``emv3ds`` of the operation after the challenge (step 5)."""
     return {'threeDSInfo': emv3ds.CHALLENGE_RESPONSE, 'protocolVersion': protocol_version, 'cres': cres}

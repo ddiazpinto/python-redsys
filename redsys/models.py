@@ -70,7 +70,7 @@ def minor_units_factor(currency: int | None) -> int:
 class BaseRequest(BaseModel):
     """Fields common to every operation message, with validation and wire serialization."""
 
-    # Construct with the snake_case names or the wire names; unknown names are screened below.
+    # extra='allow' keeps the unmodeled wire names that _screen_unknown_fields lets through.
     model_config = ConfigDict(populate_by_name=True, extra='allow')
 
     merchant_code: str = Field(alias='Ds_Merchant_MerchantCode', max_length=9)
@@ -84,12 +84,7 @@ class BaseRequest(BaseModel):
     @model_validator(mode='before')
     @classmethod
     def _screen_unknown_fields(cls, data: Any) -> Any:
-        """Reject typos and 1.x names; let unmodeled RedSys wire names through with a warning.
-
-        A parameter the library does not model yet is accepted under its wire
-        name (``Ds_Merchant_*``) and sent as given, so a RedSys addition does not
-        wait for a library release. Any other unknown name is a mistake and fails.
-        """
+        """Reject unknown and 1.x names; let unmodeled wire names (``Ds_Merchant_*``) through with a warning."""
         if not isinstance(data, dict):
             return data
         known = {name for name in cls.model_fields} | {f.alias for f in cls.model_fields.values() if f.alias}
@@ -140,7 +135,7 @@ class _StoredCredentialFields(BaseModel):
         None, alias='Ds_Merchant_Identifier', max_length=40, description='Stored-card token; see redsys.api.cof.'
     )
     direct_payment: str | None = Field(
-        None, alias='Ds_Merchant_DirectPayment', description='"true" or "moto"; see redsys.api.options.'
+        None, alias='Ds_Merchant_DirectPayment', description='options.DIRECT_PAYMENT or options.MOTO.'
     )
     cof_ini: str | None = Field(None, alias='Ds_Merchant_Cof_Ini', max_length=1, description='See redsys.api.cof.')
     cof_type: str | None = Field(None, alias='Ds_Merchant_Cof_Type', max_length=1, description='See redsys.api.cof.')
@@ -251,13 +246,15 @@ class _DirectFields(_StoredCredentialFields, _CardFields, _DirectOperationFields
     date_frequency: str | None = Field(None, alias='Ds_Merchant_DateFrecuency', description='Days between charges.')
     charge_expiry_date: str | None = Field(None, alias='Ds_Merchant_ChargeExpiryDate', description='yyyy-MM-dd.')
     dcc: str | dict[str, Any] | None = Field(
-        None, alias='Ds_Merchant_DCC', description='"Y" on the 3DS initialization; then the accepted offer.'
+        None,
+        alias='Ds_Merchant_DCC',
+        description='options.DCC_QUERY on the 3DS initialization; then the accepted offer.',
     )
     excep_sca: str | None = Field(
         None,
         alias='Ds_Merchant_Excep_SCA',
         max_length=3,
-        description='PSD2 SCA exemption requested; codes in redsys.api.sca. "Y" on the 3DS initialization asks.',
+        description='PSD2 SCA exemption requested; codes in redsys.api.sca. sca.QUERY on the 3DS initialization asks.',
     )
 
 
@@ -301,7 +298,7 @@ class _PayGoldFields(BaseModel):
     customer_mobile: str | None = Field(None, alias='Ds_Merchant_Customer_Mobile', max_length=19)
     customer_mail: str | None = Field(None, alias='Ds_Merchant_Customer_Mail', max_length=100)
     customer_sms_text: str | None = Field(
-        None, alias='Ds_Merchant_Customer_Sms_Text', max_length=160, description='Must hold paygold.SMS_URL.'
+        None, alias='Ds_Merchant_Customer_Sms_Text', max_length=160, description='Must contain paygold.SMS_URL.'
     )
     p2f_expiry_date: str | None = Field(
         None,
@@ -313,7 +310,9 @@ class _PayGoldFields(BaseModel):
         None, alias='Ds_Merchant_P2f_XmlData', max_length=1000, description='E-mail tags; see redsys.api.paygold.'
     )
     alt_transaction_type: int | None = Field(
-        None, alias='Ds_Merchant_AltTransType', description='34 turns the link into a refund without original.'
+        None,
+        alias='Ds_Merchant_AltTransType',
+        description='transactions.REFUND_WITHOUT_ORIGINAL turns the link into a refund without original.',
     )
     pay_methods: str | None = Field(None, alias='Ds_Merchant_PayMethods', description='See redsys.api.pay_methods.')
     merchant_url: str | None = Field(None, alias='Ds_Merchant_MerchantURL', max_length=250)
@@ -345,7 +344,9 @@ class DirectPaymentMessage(BaseRequest, _DirectFields, _PaymentFields, _PayGoldF
         None, alias='Ds_Merchant_SumTotal', description='Recurring series total; scaled like amount.'
     )
     financing: str | dict[str, Any] | None = Field(
-        None, alias='Ds_Merchant_Financing', description='"Y" on the 3DS initialization; then the chosen option.'
+        None,
+        alias='Ds_Merchant_Financing',
+        description='options.FINANCING_QUERY on the 3DS initialization; then the chosen option.',
     )
     matching_data: str | None = Field(
         None, alias='Ds_Merchant_MatchingData', max_length=21, description='Unique; type 17, with acquirer_identifier.'
@@ -440,7 +441,7 @@ class Response(BaseModel):
     card_country: str | None = Field(None, alias='Ds_Card_Country')
     card_type: str | None = Field(None, alias='Ds_Card_Type')
     card_brand: str | None = Field(None, alias='Ds_Card_Brand')
-    # Not in the integration guides: returned by the test environment (verified 2026-10-25).
+    # Not in the integration guides; returned by the test environment.
     card_typology: str | None = Field(None, alias='Ds_Card_Typology', description='For example CONSUMO.')
     eci: str | None = Field(None, alias='Ds_ECI', description='E-commerce indicator of the authentication.')
     response_description: str | None = Field(None, alias='Ds_Response_Description')
@@ -529,7 +530,9 @@ class Response(BaseModel):
         return describe(code, language) if code else ''
 
     def is_paid(self) -> bool:
-        return self.response_code is not None and 0 <= self.response_code <= 99
+        return (
+            self.response_code is not None and responses.AUTHORIZED <= self.response_code <= responses.AUTHORIZED_LAST
+        )
 
     def is_refunded(self) -> bool:
         return self.response_code == responses.REFUND_OR_CONFIRMATION_AUTHORIZED
@@ -540,7 +543,7 @@ class Response(BaseModel):
     def is_authorized(self) -> bool:
         return self.is_paid() or self.is_refunded() or self.is_canceled()
 
-    # 3-D Secure (EMV 3DS) accessors over the Ds_EMV3DS response object.
+    # == EMV 3DS accessors over Ds_EMV3DS ==
     @property
     def _emv3ds(self) -> dict:
         return self.emv3ds or {}

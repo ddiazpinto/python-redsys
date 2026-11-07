@@ -1,3 +1,5 @@
+"""Values of ``Ds_Merchant_ConsumerLanguage``; ``DEFAULT`` leaves the language undetermined."""
+
 DEFAULT = 0
 SPANISH = 1
 ENGLISH = 2

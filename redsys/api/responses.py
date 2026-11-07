@@ -6,6 +6,9 @@ Responses carry the code as four digits (``'0195'``); ``Response.response_code``
 AUTHORIZED = 0
 """Approved payment or pre-authorization; any code from 0 to 99 means the same."""
 
+AUTHORIZED_LAST = 99
+"""Last code of the authorized range: 0000 to 0099 all mean an authorized payment or preauthorization."""
+
 CARD_EXPIRED = 101
 """Card expired; do not retry."""
 

@@ -32,8 +32,9 @@ PayGold: `pay_gold()` sends type 15, the value of the parameters table; the PayG
 | Step | python-redsys |
 |------|---------------|
 | Initialization | `inicia_payment()`, `inicia_preauthorization()`, `inicia_authentication()`; `emv3ds` defaults to `threeds.card_data()` |
+| 3DSMethod | `threeds.method_data(three_ds_server_trans_id=..., notification_url=...)`, the `threeDSMethodData` form field the browser posts to `response.three_ds_method_url` |
 | Authentication data | The operation method with `emv3ds=threeds.authentication_data(...)` |
-| After the challenge | `challenge_response(cres=..., protocol_version=..., transaction_type=...)`; `transaction_type` defaults to 0 |
+| After the challenge | `challenge_response(cres=..., protocol_version=..., transaction_type=...)`; `transaction_type` defaults to `transactions.AUTHORIZATION` |
 
 ## Configuration
 
@@ -50,12 +51,12 @@ PayGold: `pay_gold()` sends type 15, the value of the parameters table; the PayG
 | Concept | python-redsys |
 |---------|---------------|
 | Payment method on the redirect page | `pay_methods=` with `redsys.pay_methods` (`BIZUM`, `CARD`, `BANK_TRANSFER`, `PAYPAL`, `XPAY`, `GOOGLE_PAY`) |
-| Bizum Request-to-Pay | `endpoint=client.url(environments.RTP_TRATA_PATH)` on the operation; `rtp_status`, `rtp_response` and `rtp_description` on the `Response`; codes in `redsys.bizum` |
-| PayGold link | `pay_gold()` with `customer_mail`, `customer_mobile`, `customer_sms_text`, `p2f_expiry_date`; the link is `response.url_pago_2_fases` |
-| Google Pay and Apple Pay | `xpay_data` or `xpay_decoded_data`, with `xpay_type` and `xpay_origen` from `redsys.xpay` |
+| Bizum Request-to-Pay | `pay_methods=pay_methods.BIZUM`, `bizum_mobile_number` and `endpoint=client.url(environments.RTP_TRATA_PATH)` on the operation; `rtp_status`, `rtp_response` and `rtp_description` on the `Response`; codes in `redsys.bizum` |
+| PayGold link | `pay_gold()` with `customer_mail`, `customer_mobile`, `customer_sms_text` (holding `paygold.SMS_URL`), `p2f_expiry_date`; the link is `response.url_pago_2_fases` |
+| Google Pay and Apple Pay | `xpay_data` or `xpay_decoded_data`, with `xpay_type` (`xpay.GOOGLE`, `xpay.APPLE`) and `xpay_origen` (`xpay.WEB`, `xpay.IN_APP`) |
 | Order number | `redsys.generate_order(length=12)`: 4 digits, then letters and digits |
 | Code descriptions | `redsys.codes.describe(code, language)` for `Ds_Response`, `SISnnnn` and `BIZnnnnn` codes, in Spanish or English; `response.describe()` |
-| Option values | Constants in `redsys` (`cards`, `processed_pay_methods`, `secure_payment`, `emv3ds`, `options`, `sca`, `cof`, `languages`, `currencies`, `transactions`, `responses`) |
+| Option values | Constants in `redsys` (`transactions`, `currencies`, `languages`, `pay_methods`, `cof`, `sca`, `options`, `emv3ds`, `xpay`, `paygold`, `bizum`, `environments`, `cards`, `processed_pay_methods`, `secure_payment`, `responses`) |
 | Parameter without a field | Passed by its wire name (`Ds_Merchant_...`), sent as given with an `UnknownParameterWarning` |
 
 ## Library behavior

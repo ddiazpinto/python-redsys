@@ -1,93 +1,94 @@
 # Redirect connection reference
 
-Reference for the RedSys TPV Virtual *redirect connection* ("conexión por redirección" / "Realizar Pago"). In this model the merchant builds a signed parameter set, the cardholder's browser auto-POSTs an HTML form to the RedSys endpoint, RedSys runs the payment (including 3-D Secure) on its own pages, and the result comes back two ways: a server-to-server notification POST to `Ds_Merchant_MerchantURL` and a browser redirect to `Ds_Merchant_UrlOK` / `Ds_Merchant_UrlKO`. The library's job is to prepare the request parameters and verify/parse the response; it does not perform any HTTP itself.
-
-This reference follows RedSys's official developer portal (`pagosonline.redsys.es`).
+Reference for the RedSys TPV Virtual *redirect connection* ("conexión por redirección", "Realizar Pago"). The cardholder's browser posts a signed form to RedSys; RedSys runs the payment, 3-D Secure included, on its own pages and returns the result twice: a server-to-server notification to `Ds_Merchant_MerchantURL` and a browser redirect to `Ds_Merchant_UrlOK` or `Ds_Merchant_UrlKO`. `RedirectClient` builds the form fields and verifies and parses the result; it performs no HTTP.
 
 ## Endpoints
 
-| Environment | URL |
-|-------------|-----|
-| Production | `https://sis.redsys.es/sis/realizarPago` |
-| Test / sandbox | `https://sis-t.redsys.es:25443/sis/realizarPago` |
-| Integration | `https://sis-i.redsys.es:25443/sis/realizarPago` |
-| Development | `https://sis-d.redsys.es/sis/realizarPago` |
+| Environment | Constant | URL |
+|-------------|----------|-----|
+| Production | `environments.PROD` | `https://sis.redsys.es/sis/realizarPago` |
+| Test | `environments.TEST` | `https://sis-t.redsys.es:25443/sis/realizarPago` |
+| Integration | `environments.INTE` | `https://sis-i.redsys.es:25443/sis/realizarPago` |
+| Development | `environments.DESA` | `https://sis-d.redsys.es/sis/realizarPago` |
 
-Access to the integration and development environments depends on RedSys.
+`request.endpoint` is the URL of the client's environment (`environment=`, or `sandbox=True` for `TEST`); `endpoint=` on an operation replaces it for that request. Access to the integration and development environments depends on RedSys.
 
 ## Request
 
-The merchant renders an HTML form that auto-submits (`method="POST"`) to the endpoint with exactly three fields:
+The form posts three fields, `request.to_dict()`, to `request.endpoint`:
 
 | Field | Content |
 |-------|---------|
-| `Ds_SignatureVersion` | Signature version string. Legacy: `HMAC_SHA256_V1`. Current: `HMAC_SHA512_V1` (REST guide 4.0.1) and `HMAC_SHA512_V2` (redirection guide 4.1 and later; the library default). |
-| `Ds_MerchantParameters` | Base64 of a minified JSON object whose keys are the `Ds_Merchant_*` parameters below. `HMAC_SHA256_V1` uses standard Base64; the SHA-512 versions use Base64URL. |
-| `Ds_Signature` | Signature over `Ds_MerchantParameters` (see Signature). |
+| `Ds_SignatureVersion` | `HMAC_SHA512_V2` (default), `HMAC_SHA512_V1` or legacy `HMAC_SHA256_V1`; see Signature. |
+| `Ds_MerchantParameters` | JSON object of the `Ds_Merchant_*` parameters, in unpadded Base64URL under `HMAC_SHA512_V2` and in standard Base64 under the other versions. |
+| `Ds_Signature` | Signature over `Ds_MerchantParameters`. |
 
-Example decoded `Ds_MerchantParameters` JSON for a minimal authorization (parameter keys are case-insensitive on RedSys's side):
+Decoded `Ds_MerchantParameters` of `client.payment(order="00014338z744", amount=Decimal("2.49"), merchant_url=..., url_ok=..., url_ko=...)` (RedSys reads the keys case-insensitively):
 
 ```json
 {
-  "DS_MERCHANT_ORDER": "00014338z744",
-  "DS_MERCHANT_MERCHANTCODE": "999008881",
-  "DS_MERCHANT_TERMINAL": "001",
-  "DS_MERCHANT_CURRENCY": "978",
-  "DS_MERCHANT_TRANSACTIONTYPE": "0",
-  "DS_MERCHANT_AMOUNT": "249",
-  "DS_MERCHANT_MERCHANTURL": "https://example.com/redsys/notify",
-  "DS_MERCHANT_URLOK": "https://example.com/ok",
-  "DS_MERCHANT_URLKO": "https://example.com/ko"
+  "Ds_Merchant_Amount": 249,
+  "Ds_Merchant_Currency": 978,
+  "Ds_Merchant_MerchantCode": "999008881",
+  "Ds_Merchant_MerchantURL": "https://example.com/redsys/notification",
+  "Ds_Merchant_Order": "00014338z744",
+  "Ds_Merchant_Terminal": 1,
+  "Ds_Merchant_TransactionType": 0,
+  "Ds_Merchant_UrlKO": "https://example.com/ko",
+  "Ds_Merchant_UrlOK": "https://example.com/ok"
 }
 ```
 
 ## Request parameters
 
-Minimum required for a standard payment authorization (`transaction_type = 0`):
+Each parameter is an argument of the operation method (column Argument); the wire name is accepted too.
 
-| Parameter | Type / length | Notes |
-|-----------|---------------|-------|
-| `Ds_Merchant_MerchantCode` | N, 9 | FUC code assigned by the acquiring bank. |
-| `Ds_Merchant_Terminal` | N, 3 | Terminal number (often `001`). |
-| `Ds_Merchant_TransactionType` | N, 1+ | Operation code. `0` = standard authorization. See Transaction types. |
-| `Ds_Merchant_Amount` | N, up to 12 | Integer in the currency's minor unit (cents). EUR 2.49 -> `249`. |
-| `Ds_Merchant_Currency` | N, 4 | ISO-4217 numeric. EUR = `978`. |
-| `Ds_Merchant_Order` | AN, up to 12 | First 4 characters numeric; remainder alphanumeric. RedSys recommends 4+ leading digits to avoid collisions. `redsys.generate_order()` draws one. |
+Every operation:
 
-Common optional parameters for redirect:
+| Parameter | Argument | Format | Notes |
+|-----------|----------|--------|-------|
+| `Ds_Merchant_MerchantCode` | `merchant_code` | N, 9 | FUC code assigned by the acquiring bank; usually set on the client. |
+| `Ds_Merchant_Terminal` | `terminal` | N, 3 | Terminal number, 1 to 999; usually set on the client. |
+| `Ds_Merchant_TransactionType` | set by the method | N | See Transaction types. |
+| `Ds_Merchant_Amount` | `amount` | N, 12 | `Decimal` in major units, sent in the currency's minor units: `Decimal("2.49")` in euros is `249`. |
+| `Ds_Merchant_Currency` | `currency` | N, 4 | ISO 4217 numeric code from `redsys.currencies`; `currencies.EUR` unless the client or the call sets another. |
+| `Ds_Merchant_Order` | `order` | AN, 4 to 12 | 4 digits, then up to 8 letters or digits; unique per merchant. `redsys.generate_order()` draws one. |
 
-| Parameter | Type / length | Notes |
-|-----------|---------------|-------|
-| `Ds_Merchant_MerchantURL` | AN, 250 | Server-to-server notification URL. Strongly recommended; without it the only result delivery is the browser redirect. |
-| `Ds_Merchant_UrlOK` | AN, 250 | Browser redirect on success. |
-| `Ds_Merchant_UrlKO` | AN, 250 | Browser redirect on failure. |
-| `Ds_Merchant_MerchantName` | AN, 25 | Shown to the cardholder. |
-| `Ds_Merchant_ProductDescription` | AN, 125 | Shown to the cardholder. |
-| `Ds_Merchant_Titular` | AN, 60 | Cardholder name. |
-| `Ds_Merchant_MerchantData` | AN, 1024 | Opaque merchant data, echoed back in the response. |
-| `Ds_Merchant_ConsumerLanguage` | N, 3 | Language code; `0` = undetermined; `redsys.languages`. |
-| `Ds_Merchant_Identifier` | N, 40 | Card reference token, or the literal `REQUIRED` to request a new token. |
-| `Ds_Merchant_Cof_Ini` / `Ds_Merchant_Cof_Type` / `Ds_Merchant_Cof_TxnId` | AN | Credential-on-file (recurring/tokenized) indicators. |
-| `Ds_Merchant_Excep_SCA` | AN, 3 | PSD2 SCA exemption requested: `LWV`, `TRA`, `MIT`, `COR`, `ATD` (REST guide 4.0.1); constants in `redsys.sca`. |
-| `Ds_Merchant_DirectPayment` | N | `true` or `moto` to influence authentication; `redsys.options`. |
-| `Ds_Merchant_PayMethods` | A | Payment method offered on the payment page; `z` = Bizum. Values in `redsys.pay_methods`. |
-| `Ds_Merchant_Bizum_MobileNumber` | AN, 19 | Customer phone number prefilled on the Bizum page; editable by the customer. |
-| `Ds_Merchant_Group` | N, 9 | Group that shares card references; with `Ds_Merchant_Identifier`. |
-| `Ds_Merchant_MerchantDescriptor` | AN, 25 | Soft descriptor; needs bank activation. |
-| `Ds_Merchant_Email_Titular` | AN, 100 | Cardholder e-mail; RedSys sends a purchase summary. |
-| `Ds_Merchant_ShippingAddressPyP` | A, 1 | `S` returns the PayPal shipping address, `N` does not (`redsys.options`). |
-| `Ds_Merchant_PersoCode` | N, 1 | Payment page personalization. |
-| `Ds_Merchant_Tax_Reference` | AN, 100 | Tax payment barcode, payments only; needs bank activation. |
-| `Ds_Merchant_OTA` | A, 1 | `S` on the initial authentication (type 7) of an online travel agency. |
-| `Ds_Merchant_Pan` / `Ds_Merchant_ExpiryDate` / `Ds_Merchant_Cvv2` | N | Card data sent by the merchant (PCI-DSS scope). |
-| `Ds_Merchant_Idoper` | AN, 40 | inSite operation id. |
-| `Ds_Merchant_EMV3DS` | JSON | Cardholder and address data for the issuer; RedSys collects the browser data itself. |
+Optional:
 
-The full authoritative parameter list (including PayGold, DCC, financing, xPay/Google-Apple Pay, Bizum, and the `Ds_Merchant_EMV3DS` 3-D Secure object) is on the portal's "Parámetros de entrada y salida" page; see Sources.
+| Parameter | Argument | Format | Notes |
+|-----------|----------|--------|-------|
+| `Ds_Merchant_MerchantURL` | `merchant_url` | AN, 250 | Server-to-server notification URL. Without it the browser redirect is the only result delivery. |
+| `Ds_Merchant_UrlOK` / `Ds_Merchant_UrlKO` | `url_ok` / `url_ko` | AN, 250 | Browser redirect on success / failure. |
+| `Ds_Merchant_MerchantName` | `merchant_name` | AN, 25 | Shown to the cardholder. |
+| `Ds_Merchant_ProductDescription` | `product_description` | AN, 125 | Shown to the cardholder. |
+| `Ds_Merchant_Titular` | `titular` | AN, 60 | Cardholder name. |
+| `Ds_Merchant_MerchantData` | `merchant_data` | AN, 1024 | Merchant data, echoed in the response. |
+| `Ds_Merchant_ConsumerLanguage` | `consumer_language` | N, 3 | Payment page language from `redsys.languages`; `languages.DEFAULT` (0) is undetermined. |
+| `Ds_Merchant_PayMethods` | `pay_methods` | A | Method offered on the payment page, from `redsys.pay_methods`: `BIZUM`, `CARD`, `BANK_TRANSFER`, `PAYPAL`, `XPAY` (Google Pay and Apple Pay buttons) or `GOOGLE_PAY`. |
+| `Ds_Merchant_Bizum_MobileNumber` | `bizum_mobile_number` | AN, 19 | Customer phone number prefilled on the Bizum page; the customer can change it. |
+| `Ds_Merchant_Bizum_MrtAmountVariation` | `bizum_mrt_amount_variation` | N | Bizum: ceiling for later merchant-initiated amounts, in minor units, on the operation that creates the stored credential. Types 0, 7 and 34. |
+| `Ds_Merchant_Bizum_IdOper` | `bizum_id_oper` | AN | Bizum: `response.bizum_id_oper` of an operation, to ask RedSys for its backup. Types 0, 7 and 34. |
+| `Ds_Merchant_Identifier` | `identifier` | AN, 40 | Stored-card token, or `cof.REQUEST_TOKEN` to ask for a new one. |
+| `Ds_Merchant_Cof_Ini` / `Ds_Merchant_Cof_Type` / `Ds_Merchant_Cof_Txnid` | `cof_ini` / `cof_type` / `cof_txnid` | A, 1 / A, 1 / AN, 15 | Credential-on-file indicators, values in `redsys.cof`. |
+| `Ds_Merchant_Group` | `group` | N, 9 | Group that shares card tokens; with `identifier`. |
+| `Ds_Merchant_DirectPayment` | `direct_payment` | A | `options.DIRECT_PAYMENT` skips authentication; `options.MOTO` marks a mail or telephone order. |
+| `Ds_Merchant_Excep_SCA` | `excep_sca` | A, 3 | PSD2 SCA exemption requested, from `redsys.sca`: `LWV`, `TRA`, `MIT`, `COR`, `ATD`. |
+| `Ds_Merchant_MerchantDescriptor` | `merchant_descriptor` | AN, 25 | Soft descriptor; needs bank activation. |
+| `Ds_Merchant_Email_Titular` | `email_titular` | AN, 100 | Cardholder e-mail; RedSys sends a purchase summary. |
+| `Ds_Merchant_ShippingAddressPyP` | `shipping_address_pyp` | A, 1 | `options.SHIPPING_ADDRESS` returns the PayPal shipping address, `options.NO_SHIPPING_ADDRESS` does not. |
+| `Ds_Merchant_PersoCode` | `perso_code` | N, 1 | Payment page personalization. |
+| `Ds_Merchant_Tax_Reference` | `tax_reference` | AN, 100 | Tax payment barcode; needs bank activation. Types 0, 7 and 34. |
+| `Ds_Merchant_OTA` | `ota` | A, 1 | `options.OTA_INITIAL` on the initial authentication (type 7) of an online travel agency. Types 0, 7 and 34. |
+| `Ds_Merchant_Pan` / `Ds_Merchant_ExpiryDate` / `Ds_Merchant_Cvv2` | `pan` / `expiry_date` / `cvv2` | N | Card data sent by the merchant (PCI-DSS scope); expiry as `YYMM`. |
+| `Ds_Merchant_Idoper` | `idoper` | AN, 40 | inSite operation token. |
+| `Ds_Merchant_EMV3DS` | `emv3ds` | JSON | Cardholder and address data for the issuer; RedSys collects the browser data itself. |
+
+A parameter without an argument goes by its wire name, sent as given with an `UnknownParameterWarning`. The full parameter list is on the portal's "Parámetros de entrada y salida" page; see Sources.
 
 ## Signature
 
-Every message carries a signature over the Base64 `Ds_MerchantParameters` string, keyed by a value derived per operation from the merchant secret and the order number. Three versions exist, selected by `Ds_SignatureVersion`; the library computes and verifies all of them, so only `signature_version` is chosen.
+Every message carries a signature over the `Ds_MerchantParameters` string, keyed by a value derived per operation from the merchant secret and the order number. `signature_version=` on the client selects the version; responses are verified in the version they name.
 
 | Version | Cipher / hash | Signature encoding | Specified by |
 |---------|---------------|--------------------|--------------|
@@ -95,83 +96,73 @@ Every message carries a signature over the Base64 `Ds_MerchantParameters` string
 | `HMAC_SHA512_V1` | AES-128 + HMAC-SHA512 | Base64URL, keeping the `=` padding | REST guide 4.0.1 (2025-10-17) |
 | `HMAC_SHA512_V2` | AES-128 + HMAC-SHA512 | Base64URL without padding | Redirection guide 4.1 and later (2025-09-24), "Firmar una operación" |
 
-The two SHA-512 versions share the key derivation and the HMAC and differ only in the `=` padding of the signature (verified against signed responses of the test environment). `HMAC_SHA512_V2` is the library default; under it `Ds_MerchantParameters` is sent as unpadded Base64URL, which the 3DS initialization endpoint requires (SIS0430 otherwise; verified live 2026-10-25). RedSys's "Firmar una operación" worked example derives the key from the first 16 characters of the secret and order `1234567890` as `RWt3/IPTzYRMXsQtkiGRKg==`.
+The two SHA-512 versions share the key derivation and the HMAC and differ only in the `=` padding of the signature, as signed responses of the test environment show. The 3DS initialization endpoint requires unpadded Base64URL `Ds_MerchantParameters` under `HMAC_SHA512_V2` and answers SIS0430 otherwise. RedSys's "Firmar una operación" worked example derives the key from the first 16 characters of the secret and order `1234567890` as `RWt3/IPTzYRMXsQtkiGRKg==`.
 
 Response signatures arrive in URL-safe Base64; verification normalizes both sides before a constant-time comparison.
 
 ## Response
 
-RedSys returns the result with the same three-field envelope (`Ds_SignatureVersion`, `Ds_MerchantParameters`, `Ds_Signature`), delivered both as a server-to-server POST to `Ds_Merchant_MerchantURL` and via the browser redirect. To process:
-
-1. Base64-decode `Ds_MerchantParameters` and parse the JSON of `Ds_*` fields.
-2. Recompute the signature over the received `Ds_MerchantParameters` using `Ds_Order` for the key derivation, normalize URL-safe Base64, and compare to `Ds_Signature`. A mismatch means the response is forged or tampered - reject it.
-3. Interpret `Ds_Response`.
+RedSys returns the result in the same three-field envelope, both as a server-to-server POST to `Ds_Merchant_MerchantURL` and through the browser redirect. `client.parse_response(fields)` decodes `Ds_MerchantParameters`, recomputes the signature with the key derived from `Ds_Order`, compares it with `Ds_Signature` and returns a `Response`. A mismatch raises `ValueError`: the fields did not come from RedSys or were altered.
 
 ## Response parameters
 
-| Parameter | Type / length | Meaning |
-|-----------|---------------|---------|
-| `Ds_Response` | N, 4 | Result code (see Response codes). |
-| `Ds_Amount` | N, 12 | Amount in minor units, echoed. |
-| `Ds_Currency` | N, 4 | Currency, echoed. |
-| `Ds_Order` | AN, 12 | Order number, echoed. Used to recompute the signature. |
-| `Ds_MerchantCode` | N, 9 | Merchant code, echoed. |
-| `Ds_Terminal` | N, 3 | Terminal, echoed. |
-| `Ds_TransactionType` | AN, 1 | Operation type, echoed. |
-| `Ds_AuthorisationCode` | AN, 6 | Issuer authorization code (on success). |
-| `Ds_Date` | dd/mm/yyyy | Transaction date. |
-| `Ds_Hour` | HH:mm | Transaction time. |
-| `Ds_SecurePayment` | N, 1 | 0 unsafe, 1 partial, 2 secure (3DS); `redsys.secure_payment`. |
-| `Ds_MerchantData` | AN, 1024 | Echoed merchant data. |
-| `Ds_Card_Country` | N, 3 | Issuing country. |
-| `Ds_Card_Type` | AN, 1 | `C` credit, `D` debit, `V` voucher, `X` mixed; `redsys.cards`. |
-| `Ds_Card_Brand` | N | 1 VISA, 2 Mastercard, 6 Diners, 7 private label, 8 Amex, 9 JCB, 22 UPI; `redsys.cards`. |
-| `Ds_Card_Number` | AN | Masked card number (REST responses name it `Ds_CardNumber`; both read as `Response.card_number`). |
-| `Ds_ErrorCode` | AN, 7 | `SISxxxx` error code when applicable. |
-| `Ds_EMV3DS` | JSON | 3-D Secure authentication response data. |
-| `Ds_ProcessedPayMethod` | N, 3 | Payment method the operation was processed with (`68` = Bizum); `redsys.processed_pay_methods`. |
-| `Ds_Amount_Euro` | N, 12 | Amount in euros; only for operations in a currency other than the euro. |
+| Parameter | Attribute | Format | Meaning |
+|-----------|-----------|--------|---------|
+| `Ds_Response` | `response`, `response_code` | N, 4 | Result code, as text and as an integer; see Response codes. |
+| `Ds_Amount` | `amount` | N, 12 | Amount, a `Decimal` in major units of `Ds_Currency`. |
+| `Ds_Currency` | `currency` | N, 4 | Currency. |
+| `Ds_Order` | `order` | AN, 12 | Order number; derives the signature key. |
+| `Ds_MerchantCode` | `merchant_code` | N, 9 | Merchant code. |
+| `Ds_Terminal` | `terminal` | N, 3 | Terminal. |
+| `Ds_TransactionType` | `transaction_type` | AN, 1 | Transaction type, as text. |
+| `Ds_AuthorisationCode` | `authorization_code` | AN, 6 | Issuer authorization code, on success. |
+| `Ds_Date` / `Ds_Hour` | `date` / `hour` | dd/mm/yyyy / HH:mm | Transaction date and time. |
+| `Ds_SecurePayment` | `secure_payment` | N, 1 | Authentication level, from `redsys.secure_payment`: `NOT_SECURE`, `ATTEMPT`, `SECURE`. |
+| `Ds_MerchantData` | `merchant_data` | AN, 1024 | Merchant data of the request. |
+| `Ds_Card_Country` | `card_country` | N, 3 | Issuing country. |
+| `Ds_Card_Type` | `card_type` | AN, 1 | From `redsys.cards`: `CREDIT`, `DEBIT`, `VOUCHER`, `MIXED`. |
+| `Ds_Card_Brand` | `card_brand` | N | From `redsys.cards`: `VISA`, `MASTERCARD`, `DINERS`, `PRIVATE_LABEL`, `AMEX`, `JCB`, `UPI`. |
+| `Ds_Card_Number` | `card_number` | AN | Masked card number; REST responses name it `Ds_CardNumber`. |
+| `Ds_ErrorCode` | `error_code` | AN, 7 | `SISnnnn` error code, when there is one. |
+| `Ds_EMV3DS` | `emv3ds` | JSON | 3-D Secure authentication data. |
+| `Ds_ProcessedPayMethod` | `processed_pay_method` | N, 3 | Method the operation was processed with, from `redsys.processed_pay_methods` (`BIZUM` is `68`). |
+| `Ds_Amount_Euro` | `amount_euro` | N, 12 | Amount in euros, for operations in another currency; the raw wire value. |
+| `Ds_Merchant_Identifier` / `Ds_Merchant_Cof_Txnid` | `identifier` / `cof_txnid` | AN, 40 / AN, 15 | Card token and network transaction id, when the request asked for a token. |
+| `Ds_Bizum_IdOper` | `bizum_id_oper` | AN | Bizum operation id. |
+
+`redsys.models.Response` names further fields; a parameter it does not name stays in `response.model_extra` under its wire name.
 
 ## Response codes
 
-`Ds_Response` is a 4-digit code. Authorization outcomes are decided by range:
-
-| Code / range | Meaning |
-|--------------|---------|
-| `0000`-`0099` | Authorized (payment / preauthorization). |
-| `0900` | Authorized refund or confirmation. |
-| `0400` | Authorized cancellation. |
-| `0100` | Partial authorization (verify against RedSys's docs before relying on it). |
-| `>= 0101` (other) | Declined or error; specific code identifies the reason (expired card, CVV, fraud, etc.). |
-| `SIS0xxx` / `9xxx` in `Ds_ErrorCode` | Input/processing errors (bad signature, missing field, decode failure). |
-
-The library returns the raw `Ds_Response` code (`Response.response_code`); `Response.describe()` and `redsys.codes.describe()` give its meaning in Spanish or English, listed in `docs/response-codes.md`. Helper predicates: `is_paid()` = `0 <= code <= 99`; `is_refunded()` = `code == 900`; `is_canceled()` = `code == 400`; `is_authorized()` = any of those.
+`Ds_Response` outcomes, the predicates `is_paid()`, `is_refunded()`, `is_canceled()` and `is_authorized()`, and the meaning of every code (`response.describe(language)`) are in [`response-codes.md`](response-codes.md). Processing errors arrive as `SISnnnn` codes in `Ds_ErrorCode`.
 
 ## Transaction types
 
-| Code | Operation |
-|------|-----------|
-| 0 | Authorization (standard payment) |
-| 1 | Preauthorization |
-| 2 | Preauthorization confirmation (capture) |
-| 3 | Refund |
-| 7 | Card validation (authentication only) |
-| 8 | Authentication confirmation |
-| 9 | Preauthorization cancellation |
-| 11 | Replacement preauthorization (extends a preauthorization) |
-| 15 | PayGold request (payment link) |
-| 17 | PUCE authentication |
-| 34 | Refund without original |
-| 37 | Gambling prize |
-| 38 | PayGold authorization (sent by RedSys) |
-| 44 | Delete token reference |
-| 45 | Payment cancellation |
-| 46 | Refund cancellation (48h) |
-| 47 | Authentication confirmation cancellation |
-| 48 | Partial preauthorization confirmation |
-| 51 | PayGold link expiry change |
+Constants in `redsys.transactions`.
 
-The redirect connection accepts types 0, 1, 7 and 34; the rest go through the direct connection.
+| Code | Constant | Operation |
+|------|----------|-----------|
+| 0 | `AUTHORIZATION` | Authorization (standard payment) |
+| 1 | `PREAUTHORIZATION` | Preauthorization |
+| 2 | `CONFIRMATION` | Preauthorization confirmation (capture) |
+| 3 | `REFUND` | Refund |
+| 7 | `AUTHENTICATION` | Card validation (authentication only) |
+| 8 | `AUTHENTICATION_CONFIRMATION` | Authentication confirmation |
+| 9 | `VOID` | Preauthorization void |
+| 11 | `REPLACEMENT_PREAUTHORIZATION` | Replacement preauthorization (extends a preauthorization) |
+| 15 | `PAY_GOLD` | PayGold request (payment link) |
+| 17 | `AUTHENTICATION_PUCE` | PUCE authentication |
+| 34 | `REFUND_WITHOUT_ORIGINAL` | Refund without original |
+| 37 | `BETTING_PRICE` | Betting prize |
+| 38 | `PAY_GOLD_AUTHORIZATION` | PayGold authorization (sent by RedSys) |
+| 44 | `DELETE_REFERENCE` | Delete a card token |
+| 45 | `PAYMENT_CANCELLATION` | Payment cancellation |
+| 46 | `REFUND_CANCELLATION` | Refund cancellation, within 48 hours |
+| 47 | `AUTHENTICATION_CONFIRMATION_CANCELLATION` | Authentication confirmation cancellation |
+| 48 | `PARTIAL_CONFIRMATION` | Partial preauthorization confirmation |
+| 51 | `PAY_GOLD_EXPIRY_CHANGE` | PayGold link expiry change |
+
+The redirect connection accepts `transactions.REDIRECT_TRANSACTION_TYPES` (0, 1, 7 and 34), through `payment()`, `preauthorization()`, `authentication()` and `refund_without_original()`; the rest go through the direct connection.
 
 ## Test environment
 
@@ -179,12 +170,12 @@ The redirect connection accepts types 0, 1, 7 and 34; the rest go through the di
 |-------|-------|
 | Endpoint | `https://sis-t.redsys.es:25443/sis/realizarPago` |
 | Merchant code (FUC) | `999008881` |
-| Terminal | `001` |
+| Terminal | `001` (`terminal=1`) |
 | Secret key | `sq7HjrUOBfKmC576ILgskD5srU870gJ7` |
-| Test card (VISA, EMV3DS 2.2) | `4548810000000003`, exp `12/49`, CVV `123` |
-| Test card (Mastercard, EMV3DS 2.1) | `5576441563045037`, exp `12/49`, CVV `123` |
+| Test card (Visa, EMV3DS 2.2) | `4548810000000003`, expiry `12/49`, CVV `123` |
+| Test card (Mastercard, EMV3DS 2.1) | `5576441563045037`, expiry `12/49`, CVV `123` |
 
-CVV `999` forces a denial; amounts ending in `.96`/`.72`/`.73`/`.74` EUR trigger specific declines.
+CVV `999` forces a denial; amounts ending in `.96`, `.72`, `.73` or `.74` EUR trigger specific declines.
 
 ## Sources
 
