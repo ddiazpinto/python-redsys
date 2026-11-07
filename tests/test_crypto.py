@@ -86,8 +86,6 @@ def test_sha256_v1_reproduces_live_redsys_signature():
 
 
 def test_sha512_v2_is_v1_without_padding():
-    # RedSys PHP library 2.0.1: createMerchantSignature512V2 equals 512V1 except that
-    # base64_url_encode_safe strips the '=' padding.
     params = b64encode(b'{"a":"b"}')
     v1 = Sha512V1Signer(SECRET).sign('1234567890', params)
     v2 = Sha512V2Signer(SECRET).sign('1234567890', params)

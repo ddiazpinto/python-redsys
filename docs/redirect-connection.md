@@ -79,9 +79,9 @@ Every message carries a signature over the Base64 `Ds_MerchantParameters` string
 |---------|---------------|--------------------|--------------|
 | `HMAC_SHA256_V1` (legacy) | 3DES + HMAC-SHA256 | standard Base64 | REST guide 4.0.1, Anexo 2 |
 | `HMAC_SHA512_V1` | AES-128 + HMAC-SHA512 | Base64URL, keeping the `=` padding | REST guide 4.0.1 (2025-10-17) |
-| `HMAC_SHA512_V2` | AES-128 + HMAC-SHA512 | Base64URL without padding | Redirection guide 4.1 and later (2025-09-24), "Firmar una operación", PHP library 2.0.1 |
+| `HMAC_SHA512_V2` | AES-128 + HMAC-SHA512 | Base64URL without padding | Redirection guide 4.1 and later (2025-09-24), "Firmar una operación" |
 
-The two SHA-512 versions share the key derivation and the HMAC and differ only in the `=` padding of the signature (RedSys PHP library 2.0.1, `Signature.php`). `HMAC_SHA512_V2` is the library default; under it `Ds_MerchantParameters` is sent as unpadded Base64URL, which the 3DS initialization endpoint requires (SIS0430 otherwise; verified live 2026-10-25). RedSys's "Firmar una operación" worked example derives the key from the first 16 characters of the secret and order `1234567890` as `RWt3/IPTzYRMXsQtkiGRKg==`.
+The two SHA-512 versions share the key derivation and the HMAC and differ only in the `=` padding of the signature (verified against signed responses of the test environment). `HMAC_SHA512_V2` is the library default; under it `Ds_MerchantParameters` is sent as unpadded Base64URL, which the 3DS initialization endpoint requires (SIS0430 otherwise; verified live 2026-10-25). RedSys's "Firmar una operación" worked example derives the key from the first 16 characters of the secret and order `1234567890` as `RWt3/IPTzYRMXsQtkiGRKg==`.
 
 Response signatures arrive in URL-safe Base64; verification normalizes both sides before a constant-time comparison.
 

@@ -182,7 +182,7 @@ client.payment(
 
 `signature_version` on the client constructor selects the scheme; the constants are in `redsys.clients`.
 
-- `HMAC_SHA512_V2` (AES-128 + HMAC-SHA512): the default, as in RedSys's redirection guide and libraries.
+- `HMAC_SHA512_V2` (AES-128 + HMAC-SHA512): the default, as in RedSys's redirection guide.
 - `HMAC_SHA512_V1`: the same algorithm with padded encoding, as in the REST guide.
 - `HMAC_SHA256_V1` (3DES): legacy, still accepted by RedSys.
 
