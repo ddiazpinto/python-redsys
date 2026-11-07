@@ -10,10 +10,15 @@ All notable changes to this project. Format follows [Keep a Changelog](https://k
 - `from_api_key()` on every client builds it from a RedSys API key.
 - `Request.endpoint`: the URL each request goes to.
 - `repr()` of a client shows its account and environment, never the secret key.
+- `currency` is optional and defaults to the euro; `currency=` on a client sets another default.
 
 ### Changed
 
 - `client.endpoint`, `inicia_endpoint` and the `REAL_ENDPOINT` / `TEST_ENDPOINT` class constants stay readable, but endpoints now resolve from the environment: a subclass that overrides those constants no longer changes where requests go.
+
+### Fixed
+
+- A `merchant_code` or `terminal` passed by its wire name no longer leaves a stray key in the signed parameters.
 
 ### Security
 

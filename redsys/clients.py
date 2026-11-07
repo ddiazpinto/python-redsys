@@ -30,6 +30,7 @@ from redsys.crypto import (
 )
 from redsys.exceptions import ResponseError, ValidationError
 from redsys.models import (
+    BaseRequest,
     CancellationMessage,
     ConfirmationMessage,
     DirectPaymentMessage,
@@ -129,6 +130,7 @@ class Client:
         *,
         merchant_code: str | None = None,
         terminal: int | None = None,
+        currency: int | None = None,
         sandbox: bool | None = None,
         environment: str | None = None,
         signature_version: str = DEFAULT_SIGNATURE_VERSION,
@@ -136,6 +138,7 @@ class Client:
         self._secret_key = secret_key
         self.merchant_code = merchant_code
         self.terminal = terminal
+        self.currency = currency
         self.environment = _resolve_environment(environment, sandbox)
         self.sandbox = self.environment != environments.PROD
         self.signature_version = signature_version
@@ -162,13 +165,12 @@ class Client:
 
     # -- request building -------------------------------------------------
     def _inject(self, fields: dict) -> dict:
-        """Merge the client's account identity into a call's fields (call wins)."""
-        data: dict = {}
-        if self.merchant_code is not None:
-            data['merchant_code'] = self.merchant_code
-        if self.terminal is not None:
-            data['terminal'] = self.terminal
-        data.update(fields)
+        """Merge the client's account defaults into a call's fields (call wins, by either name)."""
+        data = dict(fields)
+        for name in ('merchant_code', 'terminal', 'currency'):
+            value = getattr(self, name)
+            if value is not None and name not in data and BaseRequest.model_fields[name].alias not in data:
+                data[name] = value
         return data
 
     def _model_for(self, transaction_type: int) -> type:
