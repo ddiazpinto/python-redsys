@@ -12,7 +12,7 @@ license = "Apache-2.0"
 license-files = ["LICENSE", "NOTICE"]
 authors = [{ name = "David Díaz", email = "d.diazp@gmail.com" }]
 keywords = ["redsys", "sermepa", "tpv", "payments", "psd2"]
-dependencies = ["cryptography>=49", "pydantic>=2.13"]
+dependencies = ["cryptography>=50", "pydantic>=2.13"]
 classifiers = [
     "Intended Audience :: Developers",
     "Operating System :: OS Independent",

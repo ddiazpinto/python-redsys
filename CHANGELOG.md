@@ -2,6 +2,12 @@
 
 All notable changes to this project. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) with [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Security
+
+- Requires `cryptography` 50 or later; earlier releases from 44 on are affected by CVE-2026-69247 (GHSA-g6cj-pr64-35w5) in PKCS#7 `EnvelopedData` decryption. python-redsys does not call that API; the floor keeps integrator environments off the vulnerable range.
+
 ## [2.1.0] - 2026-10-25
 
 ### Added
