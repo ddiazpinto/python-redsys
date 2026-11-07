@@ -38,9 +38,17 @@ Requires Python 3.10+. Runtime dependencies: `cryptography` and `pydantic` (v2).
 
 The client is the single entry point: an operation method (`payment`, `preauthorization`, `confirmation`, `refund`, `cancellation`) returns a `Request`, with `.to_dict()` for the redirect POST fields and `.send()` for the direct REST call. Fields are validated on construction; `amount` is a `Decimal`. A parameter the library does not model yet is passed by its wire name (`Ds_Merchant_...`), sent as given, with an `UnknownParameterWarning`.
 
-## Environments
+## Environments and API key
 
 `environment` selects `DESA`, `INTE`, `TEST` or `PROD` (constants in `redsys.environments`). `sandbox=True` equals `TEST` and `sandbox=False` equals `PROD`; a contradictory pair raises `ValidationError`.
+
+`from_api_key()` builds any client from a RedSys API key, which carries the environment, merchant code, terminal and secret key:
+
+```python
+client = RedirectClient.from_api_key(api_key, signature_version="HMAC_SHA512_V2")
+```
+
+An invalid key raises `redsys.exceptions.ValidationError`. `repr(client)` shows no secret.
 
 ## Using *redirect connection*
 

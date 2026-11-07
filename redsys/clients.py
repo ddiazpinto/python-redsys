@@ -14,9 +14,10 @@ requests end in ``.send()`` (the library performs the REST call). Both verify
 and parse incoming results through ``client.parse_response(payload)``.
 """
 
+from base64 import b64decode
 from hmac import compare_digest
 from logging import getLogger
-from re import sub
+from re import fullmatch, sub
 
 from redsys.api import environments, transactions
 from redsys.crypto import (
@@ -91,6 +92,26 @@ def _resolve_environment(environment: str | None, sandbox: bool | None) -> str:
     return environment
 
 
+def _parse_api_key(api_key: str) -> tuple[str, str, int, str]:
+    """Split an API key into (environment, merchant code, terminal, secret key).
+
+    The format is ``<environment>_<Base64URL of merchant_terminal_secret>``, with
+    or without padding. Failures raise outside any ``except`` block and name no
+    detail, so neither the key nor its decoded secret reaches the traceback.
+    """
+    environment, _, payload = api_key.partition('_') if isinstance(api_key, str) else ('', '', '')
+    payload = payload.rstrip('=')
+    try:
+        decoded = b64decode(payload + '=' * (-len(payload) % 4), b'-_', validate=True).decode('utf-8')
+    except ValueError:
+        decoded = ''
+    fields = fullmatch(r'([0-9]{1,9})_([0-9]{1,3})_(.+)', decoded)
+    if environment not in environments.HOSTS or fields is None:
+        raise ValidationError('API key is not valid.')
+    merchant_code, terminal, secret_key = fields.groups()
+    return environment, merchant_code, int(terminal), secret_key
+
+
 class Client:
     """Base client: credentials, account identity, request factory, response parsing."""
 
@@ -119,6 +140,22 @@ class Client:
         self.sandbox = self.environment != environments.PROD
         self.signature_version = signature_version
         self.endpoint = self._url(self._PATH) if self._PATH else None
+
+    @classmethod
+    def from_api_key(cls, api_key: str, **options):
+        """Build a client from a RedSys API key, which carries the environment and the credentials.
+
+        ``options`` are the remaining constructor options (``signature_version``).
+        Raises ``ValidationError`` if the key is not valid.
+        """
+        environment, merchant_code, terminal, secret_key = _parse_api_key(api_key)
+        return cls(secret_key, merchant_code=merchant_code, terminal=terminal, environment=environment, **options)
+
+    def __repr__(self) -> str:
+        return (
+            f'{type(self).__name__}(merchant_code={self.merchant_code!r}, terminal={self.terminal!r}, '
+            f'environment={self.environment!r}, signature_version={self.signature_version!r})'
+        )
 
     def _url(self, path: str) -> str:
         return f'{environments.HOSTS[self.environment]}{path}'
