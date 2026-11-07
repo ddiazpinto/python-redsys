@@ -1,7 +1,7 @@
 """Builders for the Ds_Merchant_EMV3DS object used in 3-D Secure v2 (REST direct connection).
 
-Flow: inicia (`card_data`) -> authorize (`authentication_data`) -> [challenge] ->
-finalize (`challenge_response`). See docs/direct-connection.md. The
+Flow: inicia (`card_data`) -> [3DSMethod (`method_data`)] -> authorize (`authentication_data`) ->
+[challenge] -> finalize (`challenge_response`). See docs/direct-connection.md. The
 EMV3DS sub-field names are case-sensitive and passed through verbatim.
 
 Each function returns the dict to assign to a request's `emv3ds` field, e.g.
@@ -11,12 +11,21 @@ Each function returns the dict to assign to a request's `emv3ds` field, e.g.
     response = client.inicia(..., emv3ds=threeds.card_data()).send()
 """
 
+from base64 import urlsafe_b64encode
+from json import dumps
+
 from redsys.api import emv3ds
 
 
 def card_data() -> dict:
     """EMV3DS payload for the iniciaPeticionREST call (step 1)."""
     return {'threeDSInfo': emv3ds.CARD_DATA}
+
+
+def method_data(*, three_ds_server_trans_id, notification_url) -> str:
+    """Value of the ``threeDSMethodData`` form field the browser posts to ``threeDSMethodURL`` (step 2)."""
+    payload = {'threeDSServerTransID': three_ds_server_trans_id, 'threeDSMethodNotificationURL': notification_url}
+    return urlsafe_b64encode(dumps(payload, separators=(',', ':')).encode('utf-8')).decode('ascii').rstrip('=')
 
 
 def browser_info(

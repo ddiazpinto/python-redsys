@@ -48,7 +48,7 @@ The response is the same shape; Base64-decode `Ds_MerchantParameters`, verify `D
 Card-data SCA is a multi-step flow. The merchant owns the browser hops (the 3DSMethod iframe and the challenge); the library prepares and parses each REST call.
 
 1. inicia (`iniciaPeticionREST`) with `Ds_Merchant_EMV3DS = {"threeDSInfo": "CardData"}`. Response `Ds_EMV3DS`: `protocolVersion` (`NO_3DS_V2` / `1.0.2` / `2.1.0` / `2.2.0`), `threeDSServerTransID`, `threeDSInfo: "CardConfiguration"`, optional `threeDSMethodURL`.
-2. (optional) 3DSMethod - a hidden-iframe browser exchange with the issuer that yields `threeDSCompInd` (`Y`/`N`).
+2. (optional) 3DSMethod - when `threeDSMethodURL` is present, a hidden iframe POSTs the form field `threeDSMethodData` (`threeds.method_data(...)`) to it; finishing within 10 seconds gives `threeDSCompInd` `Y`, otherwise `N`.
 3. authorize (`trataPeticionREST`) with `Ds_Merchant_EMV3DS = {"threeDSInfo": "AuthenticationData", "protocolVersion", browser* fields, "threeDSServerTransID", "notificationURL", "threeDSCompInd"}`. Response is either frictionless (final `Ds_Response` 0000-0099) or a challenge: `Ds_EMV3DS = {"threeDSInfo": "ChallengeRequest", "acsURL", "creq"}`; a challenge response carries no `Ds_Response`.
 4. (challenge) the merchant POSTs an HTML form to `acsURL` with field `creq`; after authentication the ACS POSTs `cres` back to `notificationURL`.
 5. finalize (`trataPeticionREST`) with `Ds_Merchant_EMV3DS = {"threeDSInfo": "ChallengeResponse", "protocolVersion", "cres"}`. Response is the final result.

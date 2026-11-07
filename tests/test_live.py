@@ -16,13 +16,15 @@ import pytest
 pytestmark = pytest.mark.skipif(os.environ.get('REDSYS_LIVE') != '1', reason='set REDSYS_LIVE=1 to run')
 httpx = pytest.importorskip('httpx')
 
-from redsys import cof, currencies, sca, threeds, transactions  # noqa: E402
+from redsys import cof, currencies, emv3ds, sca, threeds, transactions  # noqa: E402
 from redsys.clients import HMAC_SHA256_V1, HMAC_SHA512_V1, HMAC_SHA512_V2, DirectClient  # noqa: E402
 
 SECRET = 'sq7HjrUOBfKmC576ILgskD5srU870gJ7'
 MERCHANT_CODE = '999008881'
 API_KEY = 'TEST_OTk5MDA4ODgxXzAwMV9zcTdIanJVT0JmS21DNTc2SUxnc2tENXNyVTg3MGdKNw'
 CARD = {'pan': '4548810000000003', 'expiry_date': '4912', 'cvv2': '123'}  # always challenges
+FRICTIONLESS_CARD = {'pan': '4548814479727229', 'expiry_date': '4912', 'cvv2': '123'}
+FRICTIONLESS_METHOD_CARD = {'pan': '4918019160034602', 'expiry_date': '4912', 'cvv2': '123'}  # with threeDSMethodURL
 BROWSER = threeds.browser_info(
     accept_header='text/html',
     user_agent='python-redsys live tests',
@@ -114,6 +116,45 @@ def test_live_challenged_payment_then_refund(version):
 
     refund = client.refund(**operation).send()
     assert refund.is_refunded()
+
+
+def _authentication(card_config, three_ds_comp_ind):
+    return threeds.authentication_data(
+        three_ds_server_trans_id=card_config.three_ds_server_trans_id,
+        notification_url='https://example.com/3ds',
+        protocol_version=card_config.protocol_version,
+        browser=BROWSER,
+        three_ds_comp_ind=three_ds_comp_ind,
+    )
+
+
+@pytest.mark.parametrize('version', VERSIONS)
+def test_live_frictionless_payment(version):
+    client, operation = _client(version), _operation()
+    card_config = client.inicia_payment(**operation, **FRICTIONLESS_CARD).send()
+    assert card_config.three_ds_method_url is None
+
+    payment = client.payment(
+        emv3ds=_authentication(card_config, emv3ds.METHOD_FAILED), **operation, **FRICTIONLESS_CARD
+    ).send()
+    assert payment.is_paid() and not payment.requires_challenge()
+
+
+@pytest.mark.parametrize('version', VERSIONS)
+def test_live_frictionless_payment_after_the_3ds_method(version):
+    client, operation = _client(version), _operation()
+    card_config = client.inicia_payment(**operation, **FRICTIONLESS_METHOD_CARD).send()
+    notification_url = 'https://example.com/3ds-method'
+    data = threeds.method_data(
+        three_ds_server_trans_id=card_config.three_ds_server_trans_id, notification_url=notification_url
+    )
+    page = httpx.post(card_config.three_ds_method_url, data={'threeDSMethodData': data}, timeout=30)
+    assert page.status_code == 200 and notification_url in page.text
+
+    payment = client.payment(
+        emv3ds=_authentication(card_config, emv3ds.METHOD_COMPLETED), **operation, **FRICTIONLESS_METHOD_CARD
+    ).send()
+    assert payment.is_paid() and not payment.requires_challenge()
 
 
 @pytest.mark.parametrize('version', VERSIONS)
