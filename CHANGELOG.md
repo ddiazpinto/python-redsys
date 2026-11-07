@@ -8,6 +8,7 @@ All notable changes to this project. Format follows [Keep a Changelog](https://k
 
 - Named environments: `environment=` on every client (`DESA`, `INTE`, `TEST`, `PROD`, in `redsys.environments`) resolves the redirect and REST endpoints. `sandbox` keeps working; a contradictory pair raises `ValidationError`.
 - `from_api_key()` on every client builds it from a RedSys API key.
+- Every request carries `Ds_Merchant_Module`, `python-redsys/<version>` by default (`redsys.clients.DEFAULT_MODULE`); `module=` on the client or on an operation replaces it and `module=None` leaves it out. The test environment accepts it on redirect, REST and the 3DS initialization.
 - `Request.endpoint`: the URL each request goes to.
 - `repr()` of a client shows its account and environment, never the secret key.
 - `currency` is optional and defaults to the euro; `currency=` on a client sets another default.

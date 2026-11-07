@@ -109,8 +109,8 @@ def test_validation_names_the_2x_replacement_for_1x_fields():
 def test_unmodeled_wire_name_passes_through_with_a_warning():
     # RedSys adds parameters; the wire name is the escape hatch until the library models them.
     with pytest.warns(UnknownParameterWarning):
-        params = _valid(Ds_Merchant_Module='python-redsys').prepare_parameters()
-    assert params['Ds_Merchant_Module'] == 'python-redsys'
+        params = _valid(Ds_Merchant_FutureParameter='value').prepare_parameters()
+    assert params['Ds_Merchant_FutureParameter'] == 'value'
 
 
 def test_validation_rejects_unknown_currency():
