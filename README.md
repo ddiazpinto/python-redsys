@@ -82,6 +82,8 @@ post_parameters = request.to_dict()  # Ds_SignatureVersion / Ds_MerchantParamete
 
 `currency` defaults to `currencies.EUR`; `currency=` on the client constructor sets another default, and a value in the call wins.
 
+The redirect connection takes `payment()`, `preauthorization()`, `authentication()` and `refund_without_original()`; any other transaction type raises `ValidationError`.
+
 Bizum: add `pay_methods="z"` (and optionally `bizum_mobile_number`) to the payment.
 
 ### 2. Communication step

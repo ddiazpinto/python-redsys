@@ -10,7 +10,7 @@ import pytest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from redsys import threeds
+from redsys import threeds, transactions
 from redsys.clients import (
     MERCHANT_PARAMETERS,
     SIGNATURE,
@@ -77,6 +77,45 @@ def test_the_same_type_is_accepted_without_a_stray_key(name, value):
     params = _params(_client().refund(**OPERATION, **{name: value}))
     assert params['Ds_Merchant_TransactionType'] == 3
     assert all(key.startswith('Ds_') for key in params)
+
+
+@pytest.mark.parametrize('method, transaction_type', [('authentication', 7), ('refund_without_original', 34)])
+def test_redirect_operation_sends_its_type(method, transaction_type):
+    client = RedirectClient(SECRET, merchant_code='999008881', terminal=1, sandbox=True)
+    request = getattr(client, method)(**OPERATION)
+    assert _params(request)['Ds_Merchant_TransactionType'] == transaction_type
+    assert request.endpoint == client.endpoint
+
+
+@pytest.mark.parametrize('transaction_type', transactions.REDIRECT_TRANSACTION_TYPES)
+def test_redirect_request_accepts_the_redirect_types(transaction_type):
+    client = RedirectClient(SECRET, merchant_code='999008881', terminal=1)
+    params = _params(client.request(transaction_type, **OPERATION))
+    assert params['Ds_Merchant_TransactionType'] == transaction_type
+
+
+@pytest.mark.parametrize(
+    'transaction_type',
+    sorted(set(transactions.TRANSACTION_TYPES) - set(transactions.REDIRECT_TRANSACTION_TYPES)),
+)
+def test_redirect_request_rejects_the_other_types(transaction_type):
+    client = RedirectClient(SECRET, merchant_code='999008881', terminal=1)
+    with pytest.raises(ValidationError, match=f'transaction type {transaction_type} '):
+        client.request(transaction_type, **OPERATION)
+
+
+@pytest.mark.parametrize('client_class', DIRECT_CLIENTS)
+@pytest.mark.parametrize('method, transaction_type', [('refund_without_original', 34), ('pay_gold_expiry_change', 51)])
+def test_direct_operation_sends_its_type(client_class, method, transaction_type):
+    client = _client(client_class)
+    request = getattr(client, method)(**OPERATION)
+    assert _params(request)['Ds_Merchant_TransactionType'] == transaction_type
+    assert request.endpoint == client.endpoint
+
+
+def test_pay_gold_expiry_change_is_a_known_type():
+    assert transactions.PAY_GOLD_EXPIRY_CHANGE == 51
+    assert transactions.PAY_GOLD_EXPIRY_CHANGE in transactions.TRANSACTION_TYPES
 
 
 # == 3-D Secure ==
