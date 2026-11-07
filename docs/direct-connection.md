@@ -27,7 +27,7 @@ Bizum Request-to-Pay uses its own paths on the same hosts, named in `redsys.envi
 | `RTP_BACKUP_PATH` | `/sis/rest/RTP/respaldarUsuarioRTP` | Backup: sends the one-time password |
 | `RTP_BACKUP_VALIDATION_PATH` | `/sis/rest/RTP/validarRespaldoUsuarioRTP` | Backup: validates the one-time password |
 
-`endpoint=client.url(environments.RTP_TRATA_PATH)` on an operation sends it there; `endpoint=` takes any HTTPS URL and is not signed.
+`endpoint=client.url(environments.RTP_TRATA_PATH)` on an operation sends it there; `endpoint=` takes any HTTPS URL and is not signed. These calls take `pay_methods="z"` and `bizum_mobile_number`; the backup validation takes `otp`. Answers carry `Ds_RtpStatus` (`OK`/`KO`), `Ds_RtpResponse` (a `BIZnnnnn` code, constants in `redsys.bizum`), `Ds_RtpDescription` and, when a backup is possible, `Ds_RtpBackupHtml` or `Ds_RtpBackupTemplate` (Base64).
 
 ## REST (JSON) flavor
 

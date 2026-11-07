@@ -226,8 +226,23 @@ class _PaymentFields(BaseModel):
     ota: str | None = Field(None, alias='Ds_Merchant_OTA', pattern=r'^S$', description='See redsys.api.options.')
 
 
-class RedirectPaymentMessage(BaseRequest, _RedirectFields, _PaymentFields):
+class _BizumFields(BaseModel):
+    """Bizum fields of payments on both connections."""
+
+    bizum_mrt_amount_variation: str | None = Field(
+        None,
+        alias='Ds_Merchant_Bizum_MrtAmountVariation',
+        pattern=r'^[0-9]+$',
+        description='Ceiling for later MIT amounts, in minor units; on the operation that creates the TID.',
+    )
+
+
+class RedirectPaymentMessage(BaseRequest, _RedirectFields, _PaymentFields, _BizumFields):
     """Redirect-connection payment (transaction type 0), authentication (7) or refund without original (34)."""
+
+    bizum_id_oper: str | None = Field(
+        None, alias='Ds_Merchant_Bizum_IdOper', description='Response.bizum_id_oper; asks RedSys for the backup.'
+    )
 
 
 class RedirectPreauthorizationMessage(BaseRequest, _RedirectFields):
@@ -279,7 +294,7 @@ class _PayGoldFields(BaseModel):
         return value
 
 
-class DirectPaymentMessage(BaseRequest, _DirectFields, _PaymentFields, _PayGoldFields):
+class DirectPaymentMessage(BaseRequest, _DirectFields, _PaymentFields, _PayGoldFields, _BizumFields):
     """Direct-connection card payment (transaction type 0), and the types without their own message."""
 
     sum_total: Decimal | None = Field(
@@ -294,6 +309,15 @@ class DirectPaymentMessage(BaseRequest, _DirectFields, _PaymentFields, _PayGoldF
     acquirer_identifier: str | None = Field(
         None, alias='Ds_Acquirer_Identifier', pattern=r'^[0-9]{1,6}$', description='Type 17, with matching_data.'
     )
+    bizum_mobile_number: str | None = Field(None, alias='Ds_Merchant_Bizum_MobileNumber', max_length=19)
+    otp: str | None = Field(
+        None, alias='Ds_Merchant_Otp', pattern=r'^[0-9]+$', description='Bizum backup one-time password.'
+    )
+
+    @field_validator('otp', mode='before')
+    @classmethod
+    def _otp_as_text(cls, value):
+        return str(value) if isinstance(value, int) and not isinstance(value, bool) else value
 
     @field_validator('financing')
     @classmethod
@@ -398,6 +422,13 @@ class Response(BaseModel):
     currency_dcc: str | None = Field(None, alias='Ds_Currency_DCC', description='Dynamic currency conversion.')
     amount_dcc: str | None = Field(None, alias='Ds_Amount_DCC', description='Minor units in Ds_Currency_DCC.')
     rts: str | None = Field(None, alias='rts', description='Partial confirmation reference; refund it with rts=.')
+    rtp_status: str | None = Field(None, alias='Ds_RtpStatus', description='Bizum Request-to-Pay: OK or KO.')
+    rtp_response: str | None = Field(None, alias='Ds_RtpResponse', description='BIZnnnnn; see redsys.api.bizum.')
+    rtp_description: str | None = Field(None, alias='Ds_RtpDescription')
+    rtp_backup_html: str | None = Field(None, alias='Ds_RtpBackupHtml', description='Base64 HTML backup form.')
+    rtp_backup_template: str | None = Field(
+        None, alias='Ds_RtpBackupTemplate', description='Base64 JSON pieces of a backup form.'
+    )
     url_pago_2_fases: str | None = Field(None, alias='Ds_UrlPago2Fases', description='PayGold payment link.')
 
     _http_status: int | None = PrivateAttr(None)

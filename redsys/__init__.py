@@ -1,4 +1,5 @@
 from redsys.api import (
+    bizum,
     cof,
     currencies,
     environments,
@@ -13,6 +14,7 @@ from redsys.api import (
 from redsys.orders import generate_order
 
 __all__ = [
+    'bizum',
     'cof',
     'currencies',
     'environments',

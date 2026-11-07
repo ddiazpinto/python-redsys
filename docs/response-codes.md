@@ -103,7 +103,7 @@ Constants in `redsys.api.responses` (also `from redsys import responses`).
 
 ## Bizum codes
 
-Returned in `Ds_RtpResponse` by the Bizum Request-to-Pay services.
+Returned in `Ds_RtpResponse` (`response.rtp_response`) by the Bizum Request-to-Pay services; constants in `redsys.bizum`.
 
 | Code | Meaning |
 |------|---------|
