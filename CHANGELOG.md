@@ -22,6 +22,7 @@ All notable changes to this project. Format follows [Keep a Changelog](https://k
 - `redsys.generate_order(length=12)`: a random order number, 4 digits then letters and digits, valid for `Ds_Merchant_Order`.
 - Parameters of RedSys's input and output table, validated on the operations it allows them: `group`, `merchant_descriptor`, `tax_reference`, `client_ip`, `transaction_date`, `ota`, `financing`, `matching_data` with `acquirer_identifier`, `mpi_external`, `rts`, `token_data`, `shipping_address_pyp`, `perso_code` and `email_titular`; card data, `idoper` and `emv3ds` on the redirect connection too. `redsys.options` names their closed values.
 - `Response.rts` and `Response.url_pago_2_fases` (`Ds_UrlPago2Fases`).
+- PayGold parameters on direct payments: `customer_mobile`, `customer_mail`, `customer_sms_text` (must contain `@URL@`), `p2f_expiry_date`, `p2f_xml_data`, `alt_transaction_type` (34), `pay_methods` and `merchant_url`; `redsys.paygold` names the SMS placeholders and the e-mail XML tags.
 - `endpoint=` on every operation and `request()`: an HTTPS URL that replaces the client's for that request, never signed. `client.url(path)` joins the environment host and a path, and `redsys.environments` names the Bizum Request-to-Pay paths (`RTP_CHECK_PATH`, `RTP_TRATA_PATH`, `RTP_BACKUP_PATH`, `RTP_BACKUP_VALIDATION_PATH`).
 - `docs/official-libraries.md`: equivalences for PHP and Java integrators.
 

@@ -82,6 +82,12 @@ Direct connection uses the same `Ds_Merchant_*` set as redirect (see the redirec
 | `Ds_Merchant_MatchingData` / `Ds_Acquirer_Identifier` | AN, 21 / N, 6 | PUCE authentication (type 17); sent together. |
 | `Ds_Merchant_TransactionDate` | `yyyy-mm-dd` | Refund: date of the original operation. |
 | `Ds_Merchant_RTS` | N, 24 | Refund of a partial confirmation: its `rts` (`Response.rts`). |
+| `Ds_Merchant_Customer_Mobile` / `Ds_Merchant_Customer_Mail` | AN, 19 / AN, 100 | PayGold: where RedSys sends the link. |
+| `Ds_Merchant_Customer_Sms_Text` | AN, 160 | PayGold SMS; must contain `@URL@` (placeholders in `redsys.paygold`). |
+| `Ds_Merchant_P2f_ExpiryDate` | AN, 23 | PayGold link expiry: minutes, or `yyyy-mm-dd-HH.MM.ss.sss`. |
+| `Ds_Merchant_P2f_XmlData` | AN, 1000 | PayGold e-mail customization, XML tags in `redsys.paygold`. |
+| `Ds_Merchant_AltTransType` | N | `34` turns a PayGold link into a refund without original. |
+| `Ds_Merchant_PayMethods` / `Ds_Merchant_MerchantURL` | A / AN, 250 | Payment methods of a PayGold link page; notification URL. |
 
 ## Signature
 

@@ -1,4 +1,15 @@
-from redsys.api import cof, currencies, environments, languages, options, pay_methods, responses, sca, transactions
+from redsys.api import (
+    cof,
+    currencies,
+    environments,
+    languages,
+    options,
+    pay_methods,
+    paygold,
+    responses,
+    sca,
+    transactions,
+)
 from redsys.orders import generate_order
 
 __all__ = [
@@ -9,6 +20,7 @@ __all__ = [
     'languages',
     'options',
     'pay_methods',
+    'paygold',
     'responses',
     'sca',
     'transactions',

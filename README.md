@@ -179,6 +179,21 @@ client.payment(order="000000001", amount=Decimal("10.56"), currency=currencies.E
                idoper="<token from the inSite JS>").send()
 ```
 
+## PayGold (payment by link)
+
+`pay_gold()` registers a payment link and RedSys sends it by SMS or e-mail; `response.url_pago_2_fases` holds the link. `customer_sms_text` must contain `paygold.SMS_URL`; `p2f_expiry_date` takes minutes or `yyyy-mm-dd-HH.MM.ss.sss`, and `pay_gold_expiry_change()` changes it later.
+
+```python
+from redsys import paygold
+
+response = client.pay_gold(
+    order="000000001", amount=Decimal("10.56"), customer_mobile="600000000",
+    customer_sms_text=f"{paygold.SMS_AMOUNT} {paygold.SMS_CURRENCY}: {paygold.SMS_URL}",
+    p2f_expiry_date=60,
+).send()
+link = response.url_pago_2_fases
+```
+
 ## Tokenization and recurring (COF / MIT)
 
 Store a card on the first payment and charge it later without card data. The first payment requests a token and flags the credential-on-file intent; RedSys returns a token and a COF transaction id that subsequent merchant-initiated charges reuse.

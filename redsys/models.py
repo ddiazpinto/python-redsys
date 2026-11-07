@@ -30,7 +30,7 @@ from pydantic import (
     model_validator,
 )
 
-from redsys.api import options, responses
+from redsys.api import options, paygold, responses, transactions
 from redsys.api.currencies import CURRENCIES, CURRENCY_DECIMALS, EUR
 from redsys.api.transactions import TRANSACTION_TYPES
 from redsys.codes import describe
@@ -236,7 +236,50 @@ class RedirectPreauthorizationMessage(BaseRequest, _RedirectFields):
     transaction_type: int = Field(1, alias='Ds_Merchant_TransactionType')
 
 
-class DirectPaymentMessage(BaseRequest, _DirectFields, _PaymentFields):
+class _PayGoldFields(BaseModel):
+    """Fields of a PayGold link (types 15 and 51)."""
+
+    customer_mobile: str | None = Field(None, alias='Ds_Merchant_Customer_Mobile', max_length=19)
+    customer_mail: str | None = Field(None, alias='Ds_Merchant_Customer_Mail', max_length=100)
+    customer_sms_text: str | None = Field(
+        None, alias='Ds_Merchant_Customer_Sms_Text', max_length=160, description='Must hold paygold.SMS_URL.'
+    )
+    p2f_expiry_date: str | None = Field(
+        None,
+        alias='Ds_Merchant_P2f_ExpiryDate',
+        pattern=r'^([0-9]{1,23}|[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]{2}\.[0-9]{2}\.[0-9]{2}\.[0-9]{3})$',
+        description='Minutes from now, or yyyy-mm-dd-HH.MM.ss.sss.',
+    )
+    p2f_xml_data: str | None = Field(
+        None, alias='Ds_Merchant_P2f_XmlData', max_length=1000, description='E-mail tags; see redsys.api.paygold.'
+    )
+    alt_transaction_type: int | None = Field(
+        None, alias='Ds_Merchant_AltTransType', description='34 turns the link into a refund without original.'
+    )
+    pay_methods: str | None = Field(None, alias='Ds_Merchant_PayMethods', description='See redsys.api.pay_methods.')
+    merchant_url: str | None = Field(None, alias='Ds_Merchant_MerchantURL', max_length=250)
+
+    @field_validator('customer_sms_text')
+    @classmethod
+    def _sms_text_holds_the_link(cls, value: str | None) -> str | None:
+        if value is not None and paygold.SMS_URL not in value:
+            raise ValueError(f'customer_sms_text must contain {paygold.SMS_URL}.')
+        return value
+
+    @field_validator('p2f_expiry_date', mode='before')
+    @classmethod
+    def _minutes_as_text(cls, value):
+        return str(value) if isinstance(value, int) and not isinstance(value, bool) else value
+
+    @field_validator('alt_transaction_type')
+    @classmethod
+    def _validate_alt_transaction_type(cls, value: int | None) -> int | None:
+        if value is not None and value != transactions.REFUND_WITHOUT_ORIGINAL:
+            raise ValueError('alt_transaction_type is 34, refund without original.')
+        return value
+
+
+class DirectPaymentMessage(BaseRequest, _DirectFields, _PaymentFields, _PayGoldFields):
     """Direct-connection card payment (transaction type 0), and the types without their own message."""
 
     sum_total: Decimal | None = Field(
