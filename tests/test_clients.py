@@ -92,8 +92,9 @@ def test_named_operation_sets_transaction_type():
 
 
 def test_low_level_request_reaches_undecorated_transaction_type():
-    decoded = _decoded(_client().request(transactions.PAY_GOLD, order=ORDER, currency=978, amount=Decimal('1.00')))
-    assert decoded['Ds_Merchant_TransactionType'] == 15
+    client = DirectClient(SECRET, merchant_code='999008881', terminal=1, sandbox=True)
+    decoded = _decoded(client.request(transactions.REFUND_CANCELLATION, order=ORDER, amount=Decimal('1.00')))
+    assert decoded['Ds_Merchant_TransactionType'] == 46
 
 
 def test_tampered_signature_rejected():

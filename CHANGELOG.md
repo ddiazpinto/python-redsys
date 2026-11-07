@@ -15,12 +15,15 @@ All notable changes to this project. Format follows [Keep a Changelog](https://k
 - Named operations on the direct clients: `authentication()`, `authentication_confirmation()`, `pay_gold()`, `authentication_confirmation_cancellation()` and `partial_confirmation()`.
 - `inicia_payment()`, `inicia_preauthorization()` and `inicia_authentication()`, which default `emv3ds` to `threeds.card_data()`, and `challenge_response()` for the step after a 3DS challenge.
 - `http_status`, `http_headers` and `raw_body` on `Response` and `ResponseError` after `send()`.
+- `authentication()` (type 7) and `refund_without_original()` (type 34) on the redirect client, and `transactions.REDIRECT_TRANSACTION_TYPES`.
+- `refund_without_original()` and `pay_gold_expiry_change()` (type 51, `transactions.PAY_GOLD_EXPIRY_CHANGE`) on the direct clients.
 - `docs/official-libraries.md`: equivalences for PHP and Java integrators.
 
 ### Changed
 
 - `client.endpoint`, `inicia_endpoint` and the `REAL_ENDPOINT` / `TEST_ENDPOINT` class constants stay readable, but endpoints now resolve from the environment: a subclass that overrides those constants no longer changes where requests go.
 - A `Ds_Merchant_TransactionType` that differs from the operation raises `ValidationError`; before, it was signed and sent. On an operation method, a different `transaction_type` raises `ValidationError` instead of `TypeError`.
+- `RedirectClient.request()` raises `ValidationError` for a transaction type other than 0, 1, 7 and 34, the ones the redirect connection accepts.
 
 ### Deprecated
 

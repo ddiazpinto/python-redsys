@@ -125,6 +125,8 @@ class Client:
     #: transaction_type -> request model. Unmapped types fall back to _DEFAULT_MODEL.
     _DEFAULT_MODEL: type | None = None
     _MODELS: dict[int, type] = {}
+    #: The transaction types the connection accepts; ``None`` leaves the check to the model.
+    _TRANSACTION_TYPES: tuple[int, ...] | None = None
 
     def __init__(
         self,
@@ -186,7 +188,8 @@ class Client:
 
         The single funnel every named operation delegates to. Use it directly
         for transaction types without a dedicated method (e.g. ``REFUND_CANCELLATION``).
-        Raises ``ValidationError`` if ``fields`` name a different transaction type.
+        Raises ``ValidationError`` if ``fields`` name a different transaction type, or if
+        the connection does not accept it (the redirect connection takes 0, 1, 7 and 34).
         """
         return self._operation(transaction_type, fields)
 
@@ -194,6 +197,8 @@ class Client:
         return self._prepare(self._message(transaction_type, fields))
 
     def _message(self, transaction_type: int, fields: dict):
+        if self._TRANSACTION_TYPES is not None and transaction_type not in self._TRANSACTION_TYPES:
+            raise ValidationError(f'transaction type {transaction_type} is not accepted by {type(self).__name__}.')
         data = self._inject(fields)
         for name in ('transaction_type', BaseRequest.model_fields['transaction_type'].alias):
             if str(data.pop(name, transaction_type)) != str(transaction_type):
@@ -248,12 +253,21 @@ class RedirectClient(Client):
     TEST_ENDPOINT = environments.HOSTS[environments.TEST] + _PATH
     _DEFAULT_MODEL = RedirectPaymentMessage
     _MODELS = {transactions.PREAUTHORIZATION: RedirectPreauthorizationMessage}
+    _TRANSACTION_TYPES = transactions.REDIRECT_TRANSACTION_TYPES
 
     def payment(self, **fields) -> Request:
         return self._operation(transactions.AUTHORIZATION, fields)
 
     def preauthorization(self, **fields) -> Request:
         return self._operation(transactions.PREAUTHORIZATION, fields)
+
+    def authentication(self, **fields) -> Request:
+        """Authenticate the cardholder and validate the card, with no hold (transaction type 7)."""
+        return self._operation(transactions.AUTHENTICATION, fields)
+
+    def refund_without_original(self, **fields) -> Request:
+        """Credit the cardholder with no previous sale (transaction type 34)."""
+        return self._operation(transactions.REFUND_WITHOUT_ORIGINAL, fields)
 
 
 def _require_httpx():
@@ -317,6 +331,14 @@ class _DirectBase(Client):
 
     def pay_gold(self, **fields) -> Request:
         return self._operation(transactions.PAY_GOLD, fields)
+
+    def pay_gold_expiry_change(self, **fields) -> Request:
+        """Change the expiry of a PayGold link (transaction type 51); RedSys requires ``amount``."""
+        return self._operation(transactions.PAY_GOLD_EXPIRY_CHANGE, fields)
+
+    def refund_without_original(self, **fields) -> Request:
+        """Credit the cardholder with no previous sale (transaction type 34)."""
+        return self._operation(transactions.REFUND_WITHOUT_ORIGINAL, fields)
 
     def refund(self, **fields) -> Request:
         return self._operation(transactions.REFUND, fields)

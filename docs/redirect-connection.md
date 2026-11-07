@@ -159,6 +159,9 @@ The library returns the raw `Ds_Response` code (`Response.response_code`) and do
 | 46 | Refund cancellation (48h) |
 | 47 | Authentication confirmation cancellation |
 | 48 | Partial preauthorization confirmation |
+| 51 | PayGold link expiry change |
+
+The redirect connection accepts types 0, 1, 7 and 34; the rest go through the direct connection.
 
 ## Test environment
 
