@@ -118,6 +118,7 @@ client.payment(
 | `Client.from_api_key(api_key)` | Reads the environment, merchant code, terminal and secret key from a RedSys API key |
 | `currency=` | Default currency of the client (`currencies.EUR` unless set); a call can override it |
 | `signature_version=` | `HMAC_SHA512_V2` (default), `HMAC_SHA512_V1` or legacy `HMAC_SHA256_V1`, from `redsys.clients` |
+| `module=` | `Ds_Merchant_Module` of every request: `python-redsys/<version>` by default, another text, or `None` to leave it out |
 | `endpoint=` on an operation | Sends that request to another HTTPS URL; `client.url(path)` builds one |
 
 Every documented value has a named constant in `redsys` (`transactions`, `currencies`, `languages`, `pay_methods`, `cof`, `sca`, `options`, `emv3ds`, `cards`, `responses`, ...). Use them instead of literals.

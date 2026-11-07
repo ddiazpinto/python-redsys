@@ -80,6 +80,7 @@ class BaseRequest(BaseModel):
     currency: int = Field(EUR, alias='Ds_Merchant_Currency')
     order: str = Field(alias='Ds_Merchant_Order', min_length=4, max_length=12, pattern=r'^[0-9]{4}[a-zA-Z0-9]{0,8}$')
     merchant_data: str | None = Field(None, alias='Ds_Merchant_MerchantData', max_length=1024)
+    module: str | None = Field(None, alias='Ds_Merchant_Module', description='Integration that sends the request.')
 
     @model_validator(mode='before')
     @classmethod

@@ -12,6 +12,7 @@ ends in ``send()``. ``parse_response()`` verifies and parses a received result.
 
 from base64 import b64decode
 from hmac import compare_digest
+from importlib.metadata import PackageNotFoundError, version
 from logging import getLogger
 from re import fullmatch, sub
 from urllib.parse import urlsplit
@@ -48,6 +49,17 @@ from redsys.request import (
 
 logger = getLogger(__name__)
 
+
+def _default_module() -> str:
+    try:
+        return f'python-redsys/{version("python-redsys")}'
+    except PackageNotFoundError:
+        return 'python-redsys'
+
+
+#: Ds_Merchant_Module sent by default: this library and its installed version.
+DEFAULT_MODULE = _default_module()
+
 # Seconds; ``send(timeout=...)`` overrides it.
 DEFAULT_TIMEOUT = 30
 
@@ -65,6 +77,7 @@ __all__ = [
     'HMAC_SHA512_V2',
     'SIGNATURE_VERSIONS',
     'DEFAULT_SIGNATURE_VERSION',
+    'DEFAULT_MODULE',
 ]
 
 
@@ -146,8 +159,10 @@ class Client:
         sandbox: bool | None = None,
         environment: str | None = None,
         signature_version: str = DEFAULT_SIGNATURE_VERSION,
+        module: str | None = DEFAULT_MODULE,
     ):
         self._secret_key = secret_key
+        self.module = module
         self.merchant_code = merchant_code
         self.terminal = terminal
         self.currency = currency
@@ -160,7 +175,7 @@ class Client:
     def from_api_key(cls, api_key: str, **options):
         """Build a client from a RedSys API key, which carries the environment and the credentials.
 
-        ``options`` are the remaining constructor options (``signature_version``).
+        ``options`` are the remaining constructor options (``signature_version``, ``currency``, ``module``).
         Raises ``ValidationError`` if the key is not valid.
         """
         environment, merchant_code, terminal, secret_key = _parse_api_key(api_key)
@@ -182,7 +197,7 @@ class Client:
     def _inject(self, fields: dict) -> dict:
         """Merge the client's account defaults into a call's fields (call wins, by either name)."""
         data = dict(fields)
-        for name in ('merchant_code', 'terminal', 'currency'):
+        for name in ('merchant_code', 'terminal', 'currency', 'module'):
             value = getattr(self, name)
             if value is not None and name not in data and BaseRequest.model_fields[name].alias not in data:
                 data[name] = value
