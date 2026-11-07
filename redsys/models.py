@@ -30,7 +30,7 @@ from pydantic import (
     model_validator,
 )
 
-from redsys.api import options, paygold, responses, transactions
+from redsys.api import options, paygold, responses, transactions, xpay
 from redsys.api.currencies import CURRENCIES, CURRENCY_DECIMALS, EUR
 from redsys.api.transactions import TRANSACTION_TYPES
 from redsys.codes import describe
@@ -194,7 +194,44 @@ class _RedirectFields(_StoredCredentialFields, _CardFields):
     )
 
 
-class _DirectFields(_StoredCredentialFields, _CardFields, _DirectOperationFields):
+class _XPayFields(BaseModel):
+    """Google Pay and Apple Pay data; the wire names have no MERCHANT infix."""
+
+    xpay_data: str | None = Field(
+        None, alias='DS_XPAYDATA', max_length=10000, description='Encrypted wallet payload, as the wallet guide says.'
+    )
+    xpay_decoded_data: dict[str, Any] | None = Field(
+        None, alias='DS_XPAYDECODEDDATA', description='Wallet payload decrypted by the merchant.'
+    )
+    xpay_type: str | None = Field(None, alias='DS_XPAYTYPE', description='See redsys.api.xpay.')
+    xpay_origen: str | None = Field(None, alias='DS_XPAYORIGEN', description='See redsys.api.xpay.')
+
+    @field_validator('xpay_type')
+    @classmethod
+    def _validate_xpay_type(cls, value: str | None) -> str | None:
+        if value is not None and value not in xpay.TYPES:
+            raise ValueError('xpay_type is not valid.')
+        return value
+
+    @field_validator('xpay_origen')
+    @classmethod
+    def _validate_xpay_origen(cls, value: str | None) -> str | None:
+        if value is not None and value not in xpay.ORIGINS:
+            raise ValueError('xpay_origen is not valid.')
+        return value
+
+    @model_validator(mode='after')
+    def _one_wallet_payload_with_its_type_and_origin(self):
+        payloads = (self.xpay_data is not None) + (self.xpay_decoded_data is not None)
+        described = (self.xpay_type is not None) + (self.xpay_origen is not None)
+        if payloads > 1:
+            raise ValueError('xpay_data and xpay_decoded_data are mutually exclusive.')
+        if (payloads, described) not in ((0, 0), (1, 2)):
+            raise ValueError('a wallet payload goes with xpay_type and xpay_origen.')
+        return self
+
+
+class _DirectFields(_StoredCredentialFields, _CardFields, _DirectOperationFields, _XPayFields):
     """Fields of the direct connection (server-to-server card data, 3DS, stored credentials)."""
 
     mpi_external: dict[str, Any] | None = Field(

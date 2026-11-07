@@ -196,6 +196,10 @@ response = client.pay_gold(
 link = response.url_pago_2_fases
 ```
 
+## Google Pay and Apple Pay
+
+A direct payment or preauthorization carries the wallet payload in `xpay_data` (encrypted) or `xpay_decoded_data` (decrypted by the merchant), with `xpay_type` (`xpay.GOOGLE`, `xpay.APPLE`) and `xpay_origen` (`xpay.WEB`, `xpay.IN_APP`); they go on the wire as `DS_XPAY*`.
+
 ## Tokenization and recurring (COF / MIT)
 
 Store a card on the first payment and charge it later without card data. The first payment requests a token and flags the credential-on-file intent; RedSys returns a token and a COF transaction id that subsequent merchant-initiated charges reuse.

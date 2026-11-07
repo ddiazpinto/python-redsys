@@ -10,6 +10,7 @@ from redsys.api import (
     responses,
     sca,
     transactions,
+    xpay,
 )
 from redsys.orders import generate_order
 
@@ -26,4 +27,5 @@ __all__ = [
     'responses',
     'sca',
     'transactions',
+    'xpay',
 ]
