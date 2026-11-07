@@ -18,6 +18,7 @@ from base64 import b64decode
 from hmac import compare_digest
 from logging import getLogger
 from re import fullmatch, sub
+from warnings import warn
 
 from redsys.api import environments, transactions
 from redsys.crypto import (
@@ -269,7 +270,7 @@ class _DirectBase(Client):
         transactions.PREAUTHORIZATION: DirectPreauthorizationMessage,
         transactions.CONFIRMATION: ConfirmationMessage,
         transactions.REFUND: RefundMessage,
-        transactions.CANCELLATION: CancellationMessage,
+        transactions.VOID: CancellationMessage,
         transactions.REPLACEMENT_PREAUTHORIZATION: DirectPreauthorizationMessage,
         transactions.PARTIAL_CONFIRMATION: ConfirmationMessage,
         transactions.PAYMENT_CANCELLATION: CancellationMessage,
@@ -293,8 +294,23 @@ class _DirectBase(Client):
     def refund(self, **fields) -> Request:
         return self.request(transactions.REFUND, **fields)
 
+    def void(self, **fields) -> Request:
+        """Void a preauthorization (transaction type 9)."""
+        return self.request(transactions.VOID, **fields)
+
+    def payment_cancellation(self, **fields) -> Request:
+        """Cancel a payment after a merchant time-out or technical error (transaction type 45)."""
+        return self.request(transactions.PAYMENT_CANCELLATION, **fields)
+
     def cancellation(self, **fields) -> Request:
-        return self.request(transactions.CANCELLATION, **fields)
+        """Deprecated: sends type 9; use ``void()``, or ``payment_cancellation()`` for type 45."""
+        warn(
+            'cancellation() is deprecated and goes away in 3.0: use void() for type 9, the type it sends, '
+            'or payment_cancellation() for type 45.',
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.void(**fields)
 
     def inicia(self, **fields) -> Request:
         """3-D Secure step 1: build a request bound to the iniciaPeticionREST endpoint."""

@@ -33,7 +33,7 @@ fields = client.payment(
 ```
 
 - `merchant_code` and `terminal` (an integer) move to the constructor. `sandbox=True` selects the test endpoint, exposed as `client.endpoint`.
-- The method chooses the operation: `payment()` and `preauthorization()`, plus `confirmation()`, `refund()` and `cancellation()` on the direct clients. Other types go through `client.request(transaction_type, ...)`.
+- The method chooses the operation: `payment()` and `preauthorization()`, plus `confirmation()`, `refund()`, `void()` and `payment_cancellation()` on the direct clients. Other types go through `client.request(transaction_type, ...)`.
 - `to_dict()` returns `str` values; the `.decode()` before rendering the form is no longer needed.
 - `payment_method` is now `pay_methods` and `mobile_number` is `bizum_mobile_number`; `transaction_date` has no equivalent. A 1.x name raises `ValidationError` naming its replacement.
 - `redsys.constants` splits into `currencies`, `languages` and `transactions` (`from redsys import ...`). Transaction types and languages are integers: `STANDARD_PAYMENT` is `transactions.AUTHORIZATION`, `"001"` is `languages.SPANISH`. Types 5, 6, O, P, Q, R and S are no longer in RedSys's table and have no 2.x equivalent.

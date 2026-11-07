@@ -11,10 +11,15 @@ All notable changes to this project. Format follows [Keep a Changelog](https://k
 - `Request.endpoint`: the URL each request goes to.
 - `repr()` of a client shows its account and environment, never the secret key.
 - `currency` is optional and defaults to the euro; `currency=` on a client sets another default.
+- `void()` (type 9) and `payment_cancellation()` (type 45) on the direct clients, and `transactions.VOID`.
 
 ### Changed
 
 - `client.endpoint`, `inicia_endpoint` and the `REAL_ENDPOINT` / `TEST_ENDPOINT` class constants stay readable, but endpoints now resolve from the environment: a subclass that overrides those constants no longer changes where requests go.
+
+### Deprecated
+
+- `cancellation()`: it keeps sending type 9 and goes away in 3.0. Use `void()`, or `payment_cancellation()` for type 45.
 
 ### Fixed
 

@@ -1,12 +1,15 @@
 import os
 import sys
+import warnings
 from base64 import b64encode
 from decimal import Decimal
 from json import dumps
 
+import pytest
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from redsys import threeds
+from redsys import threeds, transactions
 from redsys.clients import (
     DEFAULT_SIGNATURE_VERSION,
     MERCHANT_PARAMETERS,
@@ -17,6 +20,7 @@ from redsys.clients import (
 )
 from redsys.crypto import HMAC_SHA512_V1, get_signer
 from redsys.exceptions import ResponseError
+from redsys.models import decode_merchant_parameters
 
 SECRET = 'sq7HjrUOBfKmC576ILgskD5srU870gJ7'
 ORDER = '000000001'
@@ -192,3 +196,45 @@ def test_dcc_passes_through_request_and_response():
     offer = {'monedaDCC': '840', 'importeDCC': '117'}
     request = client.payment(order='000000000001', amount=Decimal('1.00'), currency=978, dcc=offer)
     assert _decoded_params(request)['Ds_Merchant_DCC'] == offer
+
+
+# == Cancellation names ==
+
+
+def _cancellation_fields():
+    return dict(order=ORDER, amount=Decimal('10.56'))
+
+
+def _sent_type(request):
+    return decode_merchant_parameters(request.to_dict()[MERCHANT_PARAMETERS].encode())['Ds_Merchant_TransactionType']
+
+
+@pytest.mark.parametrize('client_class', [DirectClient, AsyncDirectClient])
+def test_void_sends_type_9_without_warning(client_class):
+    client = client_class(SECRET, merchant_code='999008881', terminal=1, sandbox=True)
+    with warnings.catch_warnings():
+        warnings.simplefilter('error')
+        request = client.void(**_cancellation_fields())
+    assert _sent_type(request) == 9
+    assert request.endpoint == client.endpoint
+
+
+@pytest.mark.parametrize('client_class', [DirectClient, AsyncDirectClient])
+def test_payment_cancellation_sends_type_45(client_class):
+    client = client_class(SECRET, merchant_code='999008881', terminal=1, sandbox=True)
+    request = client.payment_cancellation(**_cancellation_fields())
+    assert _sent_type(request) == 45
+    assert request.endpoint == client.endpoint
+
+
+def test_cancellation_warns_and_still_sends_type_9():
+    client = DirectClient(SECRET, merchant_code='999008881', terminal=1, sandbox=True)
+    with pytest.warns(DeprecationWarning, match=r'void\(\)') as caught:
+        request = client.cancellation(**_cancellation_fields())
+    assert caught[0].filename == __file__
+    assert _sent_type(request) == 9
+    assert request.to_dict() == client.void(**_cancellation_fields()).to_dict()
+
+
+def test_void_constant_keeps_the_former_name():
+    assert transactions.VOID == transactions.CANCELLATION == 9
