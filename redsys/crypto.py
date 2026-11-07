@@ -14,12 +14,12 @@ HMAC_SHA512_V2 also sends Ds_MerchantParameters as unpadded Base64URL; the other
 versions send standard Base64. Responses are decoded tolerantly in either form.
 
 The SHA-512 versions key their HMAC with the Base64 text of the derived key and differ
-only in the padding of the signature (RedSys PHP library 2.0.1, Signature.php);
-HMAC_SHA256_V1 uses the raw derived bytes.
+only in the padding of the signature (verified against signed responses of the RedSys
+test environment); HMAC_SHA256_V1 uses the raw derived bytes.
 
 HMAC_SHA512_V1 is the REST guide 4.0.1 scheme; HMAC_SHA512_V2 (the default) is the one the
-redirection guide 4.1 and later and RedSys's own libraries use; HMAC_SHA256_V1 is
-still accepted (REST guide 4.0.1, Anexo 2). The cipher parameters are pinned by a
+redirection guide 4.1 and later uses; HMAC_SHA256_V1 is still accepted (REST guide 4.0.1,
+Anexo 2). The cipher parameters are pinned by a
 known-answer test against RedSys's official worked example (see tests/test_crypto.py).
 """
 
@@ -96,12 +96,12 @@ class Sha512V2Signer(Sha512V1Signer):
     def encode_parameters(self, parameters: dict) -> bytes:
         # V2 endpoints decode Ds_MerchantParameters as unpadded Base64URL: the 3DS
         # initialization rejects standard or padded Base64 with SIS0430 (verified
-        # live 2026-10-25), and the RedSys PHP library sends it this way.
+        # live 2026-10-25).
         return urlsafe_b64encode(dumps(parameters, sort_keys=True).encode('utf-8')).rstrip(b'=')
 
     def sign(self, order: str, merchant_parameters: bytes) -> bytes:
         # Same derived key and HMAC as HMAC_SHA512_V1; only the '=' padding goes
-        # (RedSys PHP library 2.0.1, base64_url_encode_safe).
+        # (verified live 2026-10-25).
         return super().sign(order, merchant_parameters).rstrip(b'=')
 
 

@@ -10,8 +10,7 @@ dict with ``model_validate``. Field constraints follow these RedSys documents:
   https://pagosonline.redsys.es/download/1738/
 - Guía de integración de Bizum, version 2.6 (2026-08-25), https://pagosonline.redsys.es/download/2053/
 - Developer portal pages "Firmar una operación", "Parámetros de entrada y salida" and "Operativa DCC".
-- Librería de integración en PHP 2.0.1 (https://pagosonline.redsys.es/download/3214/), the reference
-  for the response fields the guides omit.
+- Responses of the RedSys test environment, for the response fields the guides omit.
 """
 
 from base64 import b64decode, b64encode
@@ -247,8 +246,7 @@ class Response(BaseModel):
     card_country: str | None = Field(None, alias='Ds_Card_Country')
     card_type: str | None = Field(None, alias='Ds_Card_Type')
     card_brand: str | None = Field(None, alias='Ds_Card_Brand')
-    # Not in the integration guides: returned by the test environment (verified 2026-10-25)
-    # and modeled by the official PHP library 2.0.1.
+    # Not in the integration guides: returned by the test environment (verified 2026-10-25).
     card_typology: str | None = Field(None, alias='Ds_Card_Typology', description='For example CONSUMO.')
     eci: str | None = Field(None, alias='Ds_ECI', description='E-commerce indicator of the authentication.')
     response_description: str | None = Field(None, alias='Ds_Response_Description')

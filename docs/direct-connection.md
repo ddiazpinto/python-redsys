@@ -98,7 +98,6 @@ Same credentials and cards as the redirect reference, against the `sis-t.redsys.
 
 - [Developers portal home](https://pagosonline.redsys.es/desarrolladores-inicio/)
 - [Guía de Integración por REST 4.0.1, 2025-10-17, RS.TE.CEL.MAN.0037](https://pagosonline.redsys.es/download/1738/)
-- [Librería de integración en PHP 2.0.1](https://pagosonline.redsys.es/download/3214/)
 - [Área de descargas y documentación](https://pagosonline.redsys.es/desarrolladores-inicio/integrate-con-nosotros/area-de-descargas-y-documentacion/)
 - [REST integration](https://pagosonline.redsys.es/desarrolladores-inicio/documentacion-tipos-de-integracion/desarrolladores-rest/)
 - [Parámetros de entrada y salida](https://pagosonline.redsys.es/desarrolladores-inicio/integrate-con-nosotros/parametros-de-entrada-y-salida/)
