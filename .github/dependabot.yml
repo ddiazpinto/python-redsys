@@ -4,7 +4,12 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    # Version updates wait a week so a compromised release is caught upstream first; security updates do not wait.
+    cooldown:
+      default-days: 7
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: weekly
+    cooldown:
+      default-days: 7

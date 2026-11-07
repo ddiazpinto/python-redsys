@@ -74,3 +74,16 @@ jobs:
           uv run --isolated --no-project --python ${{ matrix.python-version }}
           --resolution lowest-direct --with-editable ".[http]" --with "pytest>=8.4"
           pytest -q tests/
+
+  # The single required check in the branch ruleset, so the matrix can change without editing the ruleset.
+  ci-ok:
+    if: always()
+    needs: [lint, test, lowest-dependencies]
+    runs-on: ubuntu-latest
+    steps:
+      - name: All jobs passed
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "$RESULTS"
+          for r in $RESULTS; do [ "$r" = success ] || exit 1; done
