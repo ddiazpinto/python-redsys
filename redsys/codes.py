@@ -1,4 +1,4 @@
-"""Meanings of RedSys result and error codes, in Spanish or English.
+"""Meanings of RedSys result and error codes, in Spanish, Catalan, Galician, Basque or English.
 
 from redsys.codes import describe
 
@@ -10,10 +10,23 @@ describe('BIZ00009')      # Bizum Request-to-Pay code
 from re import fullmatch
 
 from redsys import _code_texts
-from redsys.api import responses
+from redsys.api import languages, responses
 
-# Position of each language in the (English, Spanish) text pairs.
-_TEXT_INDEX = {'en': 0, 'es': 1, 2: 0, 1: 1}
+# Position of each language in the (Spanish, Catalan, Galician, Basque, English) texts; Valencian reads the Catalan.
+_TEXT_INDEX = {
+    'es': 0,
+    'ca': 1,
+    'va': 1,
+    'gl': 2,
+    'eu': 3,
+    'en': 4,
+    languages.SPANISH: 0,
+    languages.CATALAN: 1,
+    languages.VALENCIAN: 1,
+    languages.GALICIAN: 2,
+    languages.EUSKERA: 3,
+    languages.ENGLISH: 4,
+}
 
 
 def _language_index(language) -> int | None:
@@ -22,7 +35,7 @@ def _language_index(language) -> int | None:
     return _TEXT_INDEX.get(language)
 
 
-def _texts(code) -> tuple[str, str] | None:
+def _texts(code) -> tuple[str, ...] | None:
     if isinstance(code, bool):
         return None
     if isinstance(code, int):
@@ -49,7 +62,8 @@ def describe(code, language='es') -> str:
     """The meaning of a ``Ds_Response`` code, an ``SISnnnn`` error code or a Bizum ``BIZnnnnn`` code.
 
     ``code`` is an ``int`` or a ``str`` (``0``, ``'0000'``, ``'SIS0051'``, ``'BIZ00009'``). ``language``
-    is ``'es'`` or ``'en'``, or RedSys's numeric code (``languages.SPANISH``, ``languages.ENGLISH``).
+    is an ISO code (``'es'``, ``'en'``, ``'ca'``, ``'gl'``, ``'eu'``; ``'va'`` reads the Catalan) or RedSys's numeric
+    one (``languages.SPANISH``, ``ENGLISH``, ``CATALAN``, ``VALENCIAN``, ``GALICIAN``, ``EUSKERA``).
     Returns ``''`` for an unknown code or language.
     """
     texts = _texts(code)

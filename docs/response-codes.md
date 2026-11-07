@@ -1,6 +1,6 @@
 # RedSys response codes
 
-`redsys.codes.describe(code, language="es")` returns the meaning of a `Ds_Response` code, an `SISnnnn` error code or a Bizum `BIZnnnnn` code, in Spanish (`"es"`, `languages.SPANISH`) or English (`"en"`, `languages.ENGLISH`); an unknown code or language gives `""`. `response.describe(language)` gives the meaning of a parsed response's `Ds_Response`, or of its `Ds_ErrorCode` when there is none. The texts are written from RedSys's public tables.
+`redsys.codes.describe(code, language="es")` returns the meaning of a `Ds_Response` code, an `SISnnnn` error code or a Bizum `BIZnnnnn` code, in Spanish (`"es"`, `languages.SPANISH`), Catalan (`"ca"`, `languages.CATALAN`; Valencian, `"va"` or `languages.VALENCIAN`, reads the same text), Galician (`"gl"`, `languages.GALICIAN`), Basque (`"eu"`, `languages.EUSKERA`) or English (`"en"`, `languages.ENGLISH`); an unknown code or language gives `""`. `response.describe(language)` gives the meaning of a parsed response's `Ds_Response`, or of its `Ds_ErrorCode` when there is none. The texts are written from RedSys's public tables.
 
 ```python
 from redsys import languages, responses

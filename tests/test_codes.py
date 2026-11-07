@@ -66,7 +66,7 @@ def test_unknown_code_is_empty(code):
     assert describe(code, 'en') == ''
 
 
-@pytest.mark.parametrize('language', ['fr', 3, '', None, 'english'])
+@pytest.mark.parametrize('language', ['fr', languages.FRENCH, '', None, 'english'])
 def test_unknown_language_is_empty(language):
     assert describe('0116', language) == ''
 
@@ -107,3 +107,32 @@ def test_response_describe():
 def test_response_predicates_use_the_named_codes():
     assert _response(Ds_Response=f'{responses.REFUND_OR_CONFIRMATION_AUTHORIZED:04d}').is_refunded()
     assert _response(Ds_Response=f'{responses.CANCELLATION_AUTHORIZED:04d}').is_canceled()
+
+
+@pytest.mark.parametrize(
+    'iso, redsys_code, text',
+    [
+        ('ca', languages.CATALAN, 'Saldo insuficient'),
+        ('va', languages.VALENCIAN, 'Saldo insuficient'),
+        ('gl', languages.GALICIAN, None),
+        ('eu', languages.EUSKERA, None),
+    ],
+)
+def test_regional_languages_by_iso_or_redsys_code(iso, redsys_code, text):
+    expected = describe('0116', iso)
+    assert expected
+    assert describe('0116', redsys_code) == describe('0116', str(redsys_code)) == expected
+    if text is not None:
+        assert expected == text
+
+
+def test_every_code_has_a_text_in_every_language():
+    from redsys import _code_texts
+
+    entries = [
+        _code_texts.AUTHORIZED,
+        *_code_texts.DS_RESPONSE.values(),
+        *_code_texts.SIS.values(),
+        *_code_texts.BIZ.values(),
+    ]
+    assert all(len(texts) == 5 and all(texts) for texts in entries)

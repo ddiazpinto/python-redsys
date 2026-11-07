@@ -55,7 +55,7 @@ PayGold: `pay_gold()` sends type 15, the value of the parameters table; the PayG
 | PayGold link | `pay_gold()` with `customer_mail`, `customer_mobile`, `customer_sms_text` (holding `paygold.SMS_URL`), `p2f_expiry_date`; the link is `response.url_pago_2_fases` |
 | Google Pay and Apple Pay | `xpay_data` or `xpay_decoded_data`, with `xpay_type` (`xpay.GOOGLE`, `xpay.APPLE`) and `xpay_origen` (`xpay.WEB`, `xpay.IN_APP`) |
 | Order number | `redsys.generate_order(length=12)`: 4 digits, then letters and digits |
-| Code descriptions | `redsys.codes.describe(code, language)` for `Ds_Response`, `SISnnnn` and `BIZnnnnn` codes, in Spanish or English; `response.describe()` |
+| Code descriptions | `redsys.codes.describe(code, language)` for `Ds_Response`, `SISnnnn` and `BIZnnnnn` codes, in Spanish, Catalan (also Valencian), Galician, Basque or English; `response.describe()` |
 | Option values | Constants in `redsys` (`transactions`, `currencies`, `languages`, `pay_methods`, `cof`, `sca`, `options`, `emv3ds`, `xpay`, `paygold`, `bizum`, `environments`, `cards`, `processed_pay_methods`, `secure_payment`, `responses`) |
 | Parameter without a field | Passed by its wire name (`Ds_Merchant_...`), sent as given with an `UnknownParameterWarning` |
 
