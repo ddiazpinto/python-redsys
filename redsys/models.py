@@ -9,6 +9,11 @@ dict with ``model_validate``. Field constraints follow these RedSys documents:
 - TPV Virtual, Manual de Integración REST, RS.TE.CEL.MAN.0037, version 4.0.1 (2025-10-17),
   https://pagosonline.redsys.es/download/1738/
 - Guía de integración de Bizum, version 2.6 (2026-08-25), https://pagosonline.redsys.es/download/2053/
+- inSite guide, version 4.1 (2026-01-05), https://pagosonline.redsys.es/download/1751/
+- Pago por e-mail/SMS (PayGold), RS.TE.CEL.MAN.0026, version 1.8.2 (2026-04-20),
+  https://pagosonline.redsys.es/download/2056/
+- Integración de Google Pay, version 1.9 (2025-05-21), https://pagosonline.redsys.es/download/2045/
+- Apple Pay, guía de instalación, version 3.2 (2023-03-28), https://pagosonline.redsys.es/download/2050/
 - Developer portal pages "Firmar una operación", "Parámetros de entrada y salida" and "Operativa DCC".
 - Responses of the RedSys test environment, for the response fields the guides omit.
 """
