@@ -80,6 +80,8 @@ request = client.payment(
 post_parameters = request.to_dict()  # Ds_SignatureVersion / Ds_MerchantParameters / Ds_Signature
 ```
 
+`currency` defaults to `currencies.EUR`; `currency=` on the client constructor sets another default, and a value in the call wins.
+
 Bizum: add `pay_methods="z"` (and optionally `bizum_mobile_number`) to the payment.
 
 ### 2. Communication step

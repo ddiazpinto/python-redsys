@@ -118,3 +118,38 @@ def test_redirect_request_cannot_be_sent():
 def test_direct_client_endpoints_not_inverted():
     assert DirectClient(SECRET).endpoint == 'https://sis.redsys.es/sis/rest/trataPeticionREST'
     assert DirectClient(SECRET, sandbox=True).endpoint == 'https://sis-t.redsys.es:25443/sis/rest/trataPeticionREST'
+
+
+def test_currency_defaults_to_euro():
+    params = _decoded(_client().payment(order=ORDER, amount=Decimal('10.56')))
+    assert params['Ds_Merchant_Currency'] == 978
+    assert params['Ds_Merchant_Amount'] == 1056
+
+
+def test_client_currency_sets_the_default_and_scales_the_amount():
+    params = _decoded(_client(currency=392).payment(order=ORDER, amount=Decimal('1000')))
+    assert params['Ds_Merchant_Currency'] == 392
+    assert params['Ds_Merchant_Amount'] == 1000
+
+
+def test_call_currency_wins_over_the_client_default():
+    params = _decoded(_client(currency=392).payment(order=ORDER, currency=978, amount=Decimal('10.56')))
+    assert params['Ds_Merchant_Currency'] == 978
+    assert params['Ds_Merchant_Amount'] == 1056
+
+
+def test_wire_name_wins_over_client_defaults_without_stray_keys():
+    client = _client(currency=392)
+    params = _decoded(
+        client.payment(
+            order=ORDER,
+            amount=Decimal('10.56'),
+            Ds_Merchant_Currency=978,
+            Ds_Merchant_MerchantCode='111111111',
+            Ds_Merchant_Terminal=2,
+        )
+    )
+    assert params['Ds_Merchant_Currency'] == 978
+    assert params['Ds_Merchant_MerchantCode'] == '111111111'
+    assert params['Ds_Merchant_Terminal'] == 2
+    assert all(key.startswith('Ds_') for key in params)

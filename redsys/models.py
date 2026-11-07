@@ -21,7 +21,7 @@ from warnings import warn
 
 from pydantic import AliasChoices, BaseModel, ConfigDict, Field, field_serializer, field_validator, model_validator
 
-from redsys.api.currencies import CURRENCIES, CURRENCY_DECIMALS
+from redsys.api.currencies import CURRENCIES, CURRENCY_DECIMALS, EUR
 from redsys.api.transactions import TRANSACTION_TYPES
 from redsys.exceptions import UnknownParameterWarning
 
@@ -62,7 +62,7 @@ class BaseRequest(BaseModel):
     terminal: int = Field(alias='Ds_Merchant_Terminal', ge=1, le=999)
     transaction_type: int = Field(0, alias='Ds_Merchant_TransactionType')
     amount: Decimal = Field(alias='Ds_Merchant_Amount', description='Major units; scaled to minor units on the wire.')
-    currency: int = Field(alias='Ds_Merchant_Currency')
+    currency: int = Field(EUR, alias='Ds_Merchant_Currency')
     order: str = Field(alias='Ds_Merchant_Order', min_length=4, max_length=12, pattern=r'^[0-9]{4}[a-zA-Z0-9]{0,8}$')
     merchant_data: str | None = Field(None, alias='Ds_Merchant_MerchantData', max_length=1024)
 
