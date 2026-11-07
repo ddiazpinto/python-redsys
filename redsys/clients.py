@@ -18,7 +18,7 @@ from hmac import compare_digest
 from logging import getLogger
 from re import sub
 
-from redsys.api import transactions
+from redsys.api import environments, transactions
 from redsys.crypto import (
     DEFAULT_SIGNATURE_VERSION,
     HMAC_SHA256_V1,
@@ -27,7 +27,7 @@ from redsys.crypto import (
     SIGNATURE_VERSIONS,
     get_signer,
 )
-from redsys.exceptions import ResponseError
+from redsys.exceptions import ResponseError, ValidationError
 from redsys.models import (
     CancellationMessage,
     ConfirmationMessage,
@@ -79,11 +79,24 @@ def _normalize_signature(signature) -> str:
     return sub(r'[^a-zA-Z0-9]', '', signature)
 
 
+def _resolve_environment(environment: str | None, sandbox: bool | None) -> str:
+    """The environment a client targets; ``sandbox`` means TEST when true and PROD when false."""
+    implied = None if sandbox is None else environments.TEST if sandbox else environments.PROD
+    if environment is None:
+        return implied or environments.PROD
+    if environment not in environments.HOSTS:
+        raise ValidationError('environment is not valid.')
+    if implied not in (None, environment):
+        raise ValidationError('environment contradicts sandbox.')
+    return environment
+
+
 class Client:
     """Base client: credentials, account identity, request factory, response parsing."""
 
     REAL_ENDPOINT: str | None = None
     TEST_ENDPOINT: str | None = None
+    _PATH: str | None = None
 
     #: transaction_type -> request model. Unmapped types fall back to _DEFAULT_MODEL.
     _DEFAULT_MODEL: type | None = None
@@ -95,15 +108,20 @@ class Client:
         *,
         merchant_code: str | None = None,
         terminal: int | None = None,
-        sandbox: bool = False,
+        sandbox: bool | None = None,
+        environment: str | None = None,
         signature_version: str = DEFAULT_SIGNATURE_VERSION,
     ):
         self._secret_key = secret_key
         self.merchant_code = merchant_code
         self.terminal = terminal
-        self.sandbox = sandbox
+        self.environment = _resolve_environment(environment, sandbox)
+        self.sandbox = self.environment != environments.PROD
         self.signature_version = signature_version
-        self.endpoint = self.TEST_ENDPOINT if sandbox else self.REAL_ENDPOINT
+        self.endpoint = self._url(self._PATH) if self._PATH else None
+
+    def _url(self, path: str) -> str:
+        return f'{environments.HOSTS[self.environment]}{path}'
 
     # -- request building -------------------------------------------------
     def _inject(self, fields: dict) -> dict:
@@ -134,14 +152,16 @@ class Client:
         return self._prepare(model)
 
     def _prepare(self, model) -> Request:
-        return self._build_request(model)
+        return self._build_request(model, endpoint=self.endpoint)
 
-    def _build_request(self, model, signature_version: str | None = None, sender=None) -> Request:
+    def _build_request(
+        self, model, signature_version: str | None = None, sender=None, endpoint: str | None = None
+    ) -> Request:
         version = signature_version or self.signature_version
         signer = get_signer(self._secret_key, version)
         merchant_parameters = signer.encode_parameters(model.prepare_parameters())
         signature = signer.sign(model.get_order(), merchant_parameters)
-        return Request(merchant_parameters, signature, version, sender=sender)
+        return Request(merchant_parameters, signature, version, sender=sender, endpoint=endpoint)
 
     # -- response ---------------------------------------------------------
     def parse_response(self, payload: dict) -> Response:
@@ -174,8 +194,9 @@ class RedirectClient(Client):
     browser submits to RedSys. The library performs no HTTP and no redirect."""
 
     # Endpoints per the redirection guide 4.2 (RS.TE.CEL.MAN.0039).
-    REAL_ENDPOINT = 'https://sis.redsys.es/sis/realizarPago'
-    TEST_ENDPOINT = 'https://sis-t.redsys.es:25443/sis/realizarPago'
+    _PATH = environments.REDIRECT_PATH
+    REAL_ENDPOINT = environments.HOSTS[environments.PROD] + _PATH
+    TEST_ENDPOINT = environments.HOSTS[environments.TEST] + _PATH
     _DEFAULT_MODEL = RedirectPaymentMessage
     _MODELS = {transactions.PREAUTHORIZATION: RedirectPreauthorizationMessage}
 
@@ -198,10 +219,11 @@ class _DirectBase(Client):
     """Shared REST direct-connection logic (transport-agnostic)."""
 
     # Endpoints per the REST guide 4.0.1 (RS.TE.CEL.MAN.0037).
-    REAL_ENDPOINT = 'https://sis.redsys.es/sis/rest/trataPeticionREST'
-    TEST_ENDPOINT = 'https://sis-t.redsys.es:25443/sis/rest/trataPeticionREST'
-    INICIA_REAL_ENDPOINT = 'https://sis.redsys.es/sis/rest/iniciaPeticionREST'
-    INICIA_TEST_ENDPOINT = 'https://sis-t.redsys.es:25443/sis/rest/iniciaPeticionREST'
+    _PATH = environments.TRATA_PATH
+    REAL_ENDPOINT = environments.HOSTS[environments.PROD] + _PATH
+    TEST_ENDPOINT = environments.HOSTS[environments.TEST] + _PATH
+    INICIA_REAL_ENDPOINT = environments.HOSTS[environments.PROD] + environments.INICIA_PATH
+    INICIA_TEST_ENDPOINT = environments.HOSTS[environments.TEST] + environments.INICIA_PATH
 
     _DEFAULT_MODEL = DirectPaymentMessage
     _MODELS = {
@@ -218,7 +240,7 @@ class _DirectBase(Client):
 
     @property
     def inicia_endpoint(self) -> str:
-        return self.INICIA_TEST_ENDPOINT if self.sandbox else self.INICIA_REAL_ENDPOINT
+        return self._url(environments.INICIA_PATH)
 
     def payment(self, **fields) -> Request:
         return self.request(transactions.AUTHORIZATION, **fields)
@@ -241,37 +263,30 @@ class _DirectBase(Client):
         return self._prepare(model, endpoint=self.inicia_endpoint)
 
     def _prepare(self, model, endpoint: str | None = None) -> Request:
-        endpoint = endpoint or self.endpoint
-        return self._build_request(model, sender=self._make_sender(endpoint))
+        return self._build_request(model, sender=self._send, endpoint=endpoint or self.endpoint)
 
-    def _make_sender(self, endpoint):
+    def _send(self, request, **httpx_kwargs):
         raise NotImplementedError
 
 
 class DirectClient(_DirectBase):
     """Synchronous REST direct-connection client. Requires the httpx extra."""
 
-    def _make_sender(self, endpoint):
-        def sender(request, **httpx_kwargs):
-            httpx = _require_httpx()
-            httpx_kwargs.setdefault('timeout', DEFAULT_TIMEOUT)
-            http_response = httpx.post(endpoint, json=request.to_dict(), **httpx_kwargs)
-            http_response.raise_for_status()
-            return self.parse_response(http_response.json())
-
-        return sender
+    def _send(self, request, **httpx_kwargs):
+        httpx = _require_httpx()
+        httpx_kwargs.setdefault('timeout', DEFAULT_TIMEOUT)
+        http_response = httpx.post(request.endpoint, json=request.to_dict(), **httpx_kwargs)
+        http_response.raise_for_status()
+        return self.parse_response(http_response.json())
 
 
 class AsyncDirectClient(_DirectBase):
     """Asynchronous REST direct-connection client (httpx.AsyncClient). Requires the httpx extra."""
 
-    def _make_sender(self, endpoint):
-        async def sender(request, **httpx_kwargs):
-            httpx = _require_httpx()
-            httpx_kwargs.setdefault('timeout', DEFAULT_TIMEOUT)
-            async with httpx.AsyncClient() as client:
-                http_response = await client.post(endpoint, json=request.to_dict(), **httpx_kwargs)
-            http_response.raise_for_status()
-            return self.parse_response(http_response.json())
-
-        return sender
+    async def _send(self, request, **httpx_kwargs):
+        httpx = _require_httpx()
+        httpx_kwargs.setdefault('timeout', DEFAULT_TIMEOUT)
+        async with httpx.AsyncClient() as client:
+            http_response = await client.post(request.endpoint, json=request.to_dict(), **httpx_kwargs)
+        http_response.raise_for_status()
+        return self.parse_response(http_response.json())

@@ -24,11 +24,25 @@ class Request:
     Async clients bind an awaitable sender, so ``await request.send()`` works.
     """
 
-    def __init__(self, merchant_parameters: bytes, signature: bytes, signature_version: str, *, sender=None):
+    def __init__(
+        self,
+        merchant_parameters: bytes,
+        signature: bytes,
+        signature_version: str,
+        *,
+        sender=None,
+        endpoint: str | None = None,
+    ):
         self._merchant_parameters = merchant_parameters
         self._signature = signature
         self._signature_version = signature_version
         self._sender = sender
+        self._endpoint = endpoint
+
+    @property
+    def endpoint(self) -> str | None:
+        """The URL this request goes to: the form ``action`` on redirect, the REST URL on direct."""
+        return self._endpoint
 
     @property
     def merchant_parameters(self) -> bytes:

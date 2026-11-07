@@ -16,6 +16,8 @@ Because direct connection skips RedSys's hosted pages, the merchant is responsib
 | REST (3DS init) | Production | `https://sis.redsys.es/sis/rest/iniciaPeticionREST` |
 | REST (3DS init) | Test | `https://sis-t.redsys.es:25443/sis/rest/iniciaPeticionREST` |
 
+The integration (`sis-i.redsys.es:25443`) and development (`sis-d.redsys.es`) environments use the same paths; access to them depends on RedSys.
+
 ## REST (JSON) flavor
 
 The envelope is identical to the redirect method - three fields, same signature - but posted as JSON server-to-server and answered with JSON:

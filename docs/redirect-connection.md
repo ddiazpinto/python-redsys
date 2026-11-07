@@ -10,6 +10,10 @@ This reference follows RedSys's official developer portal (`pagosonline.redsys.e
 |-------------|-----|
 | Production | `https://sis.redsys.es/sis/realizarPago` |
 | Test / sandbox | `https://sis-t.redsys.es:25443/sis/realizarPago` |
+| Integration | `https://sis-i.redsys.es:25443/sis/realizarPago` |
+| Development | `https://sis-d.redsys.es/sis/realizarPago` |
+
+Access to the integration and development environments depends on RedSys.
 
 ## Request
 

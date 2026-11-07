@@ -4,6 +4,15 @@ All notable changes to this project. Format follows [Keep a Changelog](https://k
 
 ## [Unreleased]
 
+### Added
+
+- Named environments: `environment=` on every client (`DESA`, `INTE`, `TEST`, `PROD`, in `redsys.environments`) resolves the redirect and REST endpoints. `sandbox` keeps working; a contradictory pair raises `ValidationError`.
+- `Request.endpoint`: the URL each request goes to.
+
+### Changed
+
+- `client.endpoint`, `inicia_endpoint` and the `REAL_ENDPOINT` / `TEST_ENDPOINT` class constants stay readable, but endpoints now resolve from the environment: a subclass that overrides those constants no longer changes where requests go.
+
 ### Security
 
 - Requires `cryptography` 50 or later; earlier releases from 44 on are affected by CVE-2026-69247 (GHSA-g6cj-pr64-35w5) in PKCS#7 `EnvelopedData` decryption. python-redsys does not call that API; the floor keeps integrator environments off the vulnerable range.
