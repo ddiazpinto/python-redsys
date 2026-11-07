@@ -1,3 +1,3 @@
-from redsys.api import cof, currencies, languages, sca, transactions
+from redsys.api import cof, currencies, environments, languages, sca, transactions
 
-__all__ = ['cof', 'currencies', 'languages', 'sca', 'transactions']
+__all__ = ['cof', 'currencies', 'environments', 'languages', 'sca', 'transactions']

@@ -38,6 +38,10 @@ Requires Python 3.10+. Runtime dependencies: `cryptography` and `pydantic` (v2).
 
 The client is the single entry point: an operation method (`payment`, `preauthorization`, `confirmation`, `refund`, `cancellation`) returns a `Request`, with `.to_dict()` for the redirect POST fields and `.send()` for the direct REST call. Fields are validated on construction; `amount` is a `Decimal`. A parameter the library does not model yet is passed by its wire name (`Ds_Merchant_...`), sent as given, with an `UnknownParameterWarning`.
 
+## Environments
+
+`environment` selects `DESA`, `INTE`, `TEST` or `PROD` (constants in `redsys.environments`). `sandbox=True` equals `TEST` and `sandbox=False` equals `PROD`; a contradictory pair raises `ValidationError`.
+
 ## Using *redirect connection*
 
 ### 1. Build a signed request
@@ -54,7 +58,7 @@ client = RedirectClient(
     sandbox=False,
 )
 
-post_parameters = client.payment(
+request = client.payment(
     order="000000001",
     currency=currencies.EUR,
     # The amount is a Decimal; pre-quantize to two decimals.
@@ -64,14 +68,15 @@ post_parameters = client.payment(
     url_ko="https://example.com/ko",
     merchant_name="Example Commerce",
     product_description="Products of Example Commerce",
-).to_dict()  # Ds_SignatureVersion / Ds_MerchantParameters / Ds_Signature
+)
+post_parameters = request.to_dict()  # Ds_SignatureVersion / Ds_MerchantParameters / Ds_Signature
 ```
 
 Bizum: add `pay_methods="z"` (and optionally `bizum_mobile_number`) to the payment.
 
 ### 2. Communication step
 
-Auto-submit an HTML form (`method="POST"`) to `client.endpoint` with the three `post_parameters` fields. RedSys notifies the result both as a server-to-server POST to `merchant_url` and as a browser redirect to `url_ok` / `url_ko`.
+Auto-submit an HTML form (`method="POST"`) to `request.endpoint` with the three `post_parameters` fields. RedSys notifies the result both as a server-to-server POST to `merchant_url` and as a browser redirect to `url_ok` / `url_ko`.
 
 ### 3. Verify and read the response
 
