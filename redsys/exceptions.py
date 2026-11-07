@@ -8,6 +8,9 @@ class ResponseError(RedsysError):
     def __init__(self, error_code, payload=None):
         self.error_code = error_code
         self.payload = payload
+        self.http_status = None
+        self.http_headers = None
+        self.raw_body = None
         super().__init__(f'RedSys returned error: {error_code}')
 
 

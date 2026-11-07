@@ -378,7 +378,13 @@ class _DirectBase(Client):
 
     def _parse_http_response(self, http_response) -> Response:
         http_response.raise_for_status()
-        return self.parse_response(http_response.json())
+        transport = (http_response.status_code, dict(http_response.headers), http_response.text)
+        try:
+            response = self.parse_response(http_response.json())
+        except ResponseError as error:
+            error.http_status, error.http_headers, error.raw_body = transport
+            raise
+        return response._with_transport(*transport)
 
 
 class DirectClient(_DirectBase):

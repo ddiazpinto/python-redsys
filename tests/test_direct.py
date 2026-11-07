@@ -108,6 +108,10 @@ def test_send_posts_signed_body_and_parses_response():
     captured = {}
 
     class _FakeResponse:
+        status_code = 200
+        headers: dict = {}
+        text = ''
+
         def raise_for_status(self):
             return None
 
@@ -142,6 +146,10 @@ def test_async_inicia_posts_and_parses():
     captured = {}
 
     class _FakeResponse:
+        status_code = 200
+        headers: dict = {}
+        text = ''
+
         def raise_for_status(self):
             return None
 

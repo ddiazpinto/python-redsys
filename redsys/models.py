@@ -19,7 +19,16 @@ from json import dumps, loads
 from typing import Any
 from warnings import warn
 
-from pydantic import AliasChoices, BaseModel, ConfigDict, Field, field_serializer, field_validator, model_validator
+from pydantic import (
+    AliasChoices,
+    BaseModel,
+    ConfigDict,
+    Field,
+    PrivateAttr,
+    field_serializer,
+    field_validator,
+    model_validator,
+)
 
 from redsys.api.currencies import CURRENCIES, CURRENCY_DECIMALS, EUR
 from redsys.api.transactions import TRANSACTION_TYPES
@@ -272,6 +281,10 @@ class Response(BaseModel):
     currency_dcc: str | None = Field(None, alias='Ds_Currency_DCC', description='Dynamic currency conversion.')
     amount_dcc: str | None = Field(None, alias='Ds_Amount_DCC', description='Minor units in Ds_Currency_DCC.')
 
+    _http_status: int | None = PrivateAttr(None)
+    _http_headers: dict[str, str] | None = PrivateAttr(None)
+    _raw_body: str | None = PrivateAttr(None)
+
     @field_validator('amount', mode='before')
     @classmethod
     def _blank_amount_to_none(cls, value):
@@ -289,6 +302,25 @@ class Response(BaseModel):
 
     def get_order(self) -> str | None:
         return self.order
+
+    def _with_transport(self, http_status: int, http_headers: dict[str, str], raw_body: str) -> 'Response':
+        self._http_status, self._http_headers, self._raw_body = http_status, http_headers, raw_body
+        return self
+
+    @property
+    def http_status(self) -> int | None:
+        """HTTP status of the direct call; ``None`` when parsed from a received payload."""
+        return self._http_status
+
+    @property
+    def http_headers(self) -> dict[str, str] | None:
+        """HTTP headers of the direct call; ``None`` when parsed from a received payload."""
+        return self._http_headers
+
+    @property
+    def raw_body(self) -> str | None:
+        """Unprocessed HTTP body of the direct call; ``None`` when parsed from a received payload."""
+        return self._raw_body
 
     @property
     def response_code(self):
