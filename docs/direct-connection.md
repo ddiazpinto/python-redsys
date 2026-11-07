@@ -55,7 +55,7 @@ Card-data SCA is a multi-step flow. The merchant owns the browser hops (the 3DSM
 
 The `protocolVersion` in the authorize call must not exceed the one returned by inicia, and EMV3DS sub-field names are case-sensitive.
 
-In the library, `redsys.threeds` builds the EMV3DS objects and `DirectClient.inicia()` / `.send()` drive the init and authorize/finalize calls; the parsed `Response` exposes the 3DS fields and predicates (`requires_challenge()`, `acs_url`, `creq`, `is_no_3ds()`).
+`redsys.emv3ds` names the values of both objects (`threeDSInfo`, protocol versions, `threeDSCompInd`, challenge window and indicator, `whiteListStatus`). In the library, `redsys.threeds` builds the EMV3DS objects and `DirectClient.inicia()` / `.send()` drive the init and authorize/finalize calls; the parsed `Response` exposes the 3DS fields and predicates (`requires_challenge()`, `acs_url`, `creq`, `is_no_3ds()`).
 
 ## Request parameters
 

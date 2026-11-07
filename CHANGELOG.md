@@ -25,6 +25,7 @@ All notable changes to this project. Format follows [Keep a Changelog](https://k
 - Google Pay and Apple Pay on direct payments and preauthorizations: `xpay_data` or `xpay_decoded_data`, with `xpay_type` and `xpay_origen` (`DS_XPAYDATA`, `DS_XPAYDECODEDDATA`, `DS_XPAYTYPE`, `DS_XPAYORIGEN`); `redsys.xpay` names their values.
 - Bizum parameters: `bizum_mrt_amount_variation` on payments, `bizum_id_oper` (redirect backup), and `bizum_mobile_number` and `otp` on direct payments; `Response.rtp_status`, `rtp_response`, `rtp_description`, `rtp_backup_html` and `rtp_backup_template`. `redsys.bizum` names the Request-to-Pay statuses and `BIZnnnnn` codes.
 - PayGold parameters on direct payments: `customer_mobile`, `customer_mail`, `customer_sms_text` (must contain `@URL@`), `p2f_expiry_date`, `p2f_xml_data`, `alt_transaction_type` (34), `pay_methods` and `merchant_url`; `redsys.paygold` names the SMS placeholders and the e-mail XML tags.
+- Constants for documented option values: `redsys.cards` (card types, brands, PSD2), `redsys.processed_pay_methods`, `redsys.secure_payment`, `redsys.emv3ds` (EMV3DS request and response values), direct payment and DCC values in `redsys.options`, `sca.WHITELIST`, `sca.NO_QUERY`, and the languages `HINDI`, `KOREAN` and `ARABIC`.
 - `endpoint=` on every operation and `request()`: an HTTPS URL that replaces the client's for that request, never signed. `client.url(path)` joins the environment host and a path, and `redsys.environments` names the Bizum Request-to-Pay paths (`RTP_CHECK_PATH`, `RTP_TRATA_PATH`, `RTP_BACKUP_PATH`, `RTP_BACKUP_VALIDATION_PATH`).
 - `docs/official-libraries.md`: equivalences for PHP and Java integrators.
 
@@ -42,6 +43,7 @@ All notable changes to this project. Format follows [Keep a Changelog](https://k
 
 ### Fixed
 
+- `languages.BULGARIAN` is 100, the code of RedSys's language catalog; it was 14.
 - A `merchant_code`, `terminal` or `transaction_type` passed by its wire name no longer leaves a stray key in the signed parameters.
 
 ### Security

@@ -36,7 +36,7 @@ Requires Python 3.10+. Runtime dependencies: `cryptography` and `pydantic` (v2).
 
 ## Usage
 
-The client is the single entry point: an operation method (`payment`, `preauthorization`, `confirmation`, `refund`, `void`, ...) returns a `Request`, with `.to_dict()` for the redirect POST fields and `.send()` for the direct REST call. Fields are validated on construction; `amount` is a `Decimal`. A parameter the library does not model yet is passed by its wire name (`Ds_Merchant_...`), sent as given, with an `UnknownParameterWarning`.
+The client is the single entry point: an operation method (`payment`, `preauthorization`, `confirmation`, `refund`, `void`, ...) returns a `Request`, with `.to_dict()` for the redirect POST fields and `.send()` for the direct REST call. Fields are validated on construction; `amount` is a `Decimal`. A parameter the library does not model yet is passed by its wire name (`Ds_Merchant_...`), sent as given, with an `UnknownParameterWarning`. Documented values have named constants in modules of `redsys` (`transactions`, `currencies`, `languages`, `options`, `cards`, `emv3ds`, `processed_pay_methods`, `secure_payment`, ...).
 
 ## Environments and API key
 
