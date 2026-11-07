@@ -102,15 +102,15 @@ def test_validation_rejects_unknown_snake_case_field():
 def test_validation_names_the_2x_replacement_for_1x_fields():
     with pytest.raises(ValidationError, match='pay_methods'):
         _valid(payment_method='z')
-    with pytest.raises(ValidationError, match='no 2.x equivalent'):
-        _valid(transaction_date='2026-10-25')
+    with pytest.raises(ValidationError, match='bizum_mobile_number'):
+        _valid(mobile_number='+34700000000')
 
 
 def test_unmodeled_wire_name_passes_through_with_a_warning():
     # RedSys adds parameters; the wire name is the escape hatch until the library models them.
     with pytest.warns(UnknownParameterWarning):
-        params = _valid(Ds_Merchant_Tax_Reference='ABC123').prepare_parameters()
-    assert params['Ds_Merchant_Tax_Reference'] == 'ABC123'
+        params = _valid(Ds_Merchant_Module='python-redsys').prepare_parameters()
+    assert params['Ds_Merchant_Module'] == 'python-redsys'
 
 
 def test_validation_rejects_unknown_currency():

@@ -72,6 +72,16 @@ Common optional parameters for redirect:
 | `Ds_Merchant_DirectPayment` | N | `true` or `moto` to influence authentication. |
 | `Ds_Merchant_PayMethods` | A | Payment method offered on the payment page; `z` = Bizum. Values in `redsys.pay_methods`. |
 | `Ds_Merchant_Bizum_MobileNumber` | AN, 19 | Customer phone number prefilled on the Bizum page; editable by the customer. |
+| `Ds_Merchant_Group` | N, 9 | Group that shares card references; with `Ds_Merchant_Identifier`. |
+| `Ds_Merchant_MerchantDescriptor` | AN, 25 | Soft descriptor; needs bank activation. |
+| `Ds_Merchant_Email_Titular` | AN, 100 | Cardholder e-mail; RedSys sends a purchase summary. |
+| `Ds_Merchant_ShippingAddressPyP` | A, 1 | `S` returns the PayPal shipping address, `N` does not (`redsys.options`). |
+| `Ds_Merchant_PersoCode` | N, 1 | Payment page personalization. |
+| `Ds_Merchant_Tax_Reference` | AN, 100 | Tax payment barcode, payments only; needs bank activation. |
+| `Ds_Merchant_OTA` | A, 1 | `S` on the initial authentication (type 7) of an online travel agency. |
+| `Ds_Merchant_Pan` / `Ds_Merchant_ExpiryDate` / `Ds_Merchant_Cvv2` | N | Card data sent by the merchant (PCI-DSS scope). |
+| `Ds_Merchant_Idoper` | AN, 40 | inSite operation id. |
+| `Ds_Merchant_EMV3DS` | JSON | Cardholder and address data for the issuer; RedSys collects the browser data itself. |
 
 The full authoritative parameter list (including PayGold, DCC, financing, xPay/Google-Apple Pay, Bizum, and the `Ds_Merchant_EMV3DS` 3-D Secure object) is on the portal's "Parámetros de entrada y salida" page; see Sources.
 

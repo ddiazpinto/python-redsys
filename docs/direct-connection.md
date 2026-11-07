@@ -74,6 +74,14 @@ Direct connection uses the same `Ds_Merchant_*` set as redirect (see the redirec
 | `Ds_Merchant_DirectPayment` | N | `true`/`moto` to influence authentication. |
 | `Ds_Merchant_Excep_SCA` | AN, 3 | PSD2 SCA exemption requested: `LWV`, `TRA`, `MIT`, `COR`, `ATD`; `Y` on iniciaPeticionREST asks which exemptions the card allows (answer in `Ds_Excep_SCA`). MIT also sends `Ds_Merchant_DirectPayment` = `true`. |
 | `Ds_Merchant_DCC` | A or JSON | Dynamic currency conversion: `Y` on iniciaPeticionREST asks for an offer (returned in `Ds_DCC`); the accepted offer goes back in the payment. |
+| `Ds_Merchant_Financing` | A or JSON | `Y` on iniciaPeticionREST asks for financing; the chosen option goes back in the payment. |
+| `Ds_Merchant_ClientIP` | AN, 15 | Customer IP address. |
+| `Ds_Merchant_MerchantDescriptor` | AN, 25 | Soft descriptor; needs bank activation. |
+| `Ds_Merchant_MpiExternal` | JSON | Results of an external 3DS server. |
+| `Ds_Merchant_TokenData` | JSON | Network token cryptogram data. |
+| `Ds_Merchant_MatchingData` / `Ds_Acquirer_Identifier` | AN, 21 / N, 6 | PUCE authentication (type 17); sent together. |
+| `Ds_Merchant_TransactionDate` | `yyyy-mm-dd` | Refund: date of the original operation. |
+| `Ds_Merchant_RTS` | N, 24 | Refund of a partial confirmation: its `rts` (`Response.rts`). |
 
 ## Signature
 
@@ -81,7 +89,7 @@ Identical to the redirect connection; see the redirect reference.
 
 ## Response
 
-REST responses use the three-field envelope; decode and verify exactly as in the redirect flow. Operation-specific response fields appear alongside the standard ones (for example `Ds_Merchant_Identifier` when a token was created, `Ds_EMV3DS` for the authentication result, DCC and financing objects when those features are active).
+REST responses use the three-field envelope; decode and verify exactly as in the redirect flow. Operation-specific response fields appear alongside the standard ones (for example `Ds_Merchant_Identifier` when a token was created, `Ds_EMV3DS` for the authentication result, DCC and financing objects when those features are active, `rts` after a partial confirmation and `Ds_UrlPago2Fases` with a PayGold link).
 
 ## Response codes
 
