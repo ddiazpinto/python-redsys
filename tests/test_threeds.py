@@ -1,6 +1,6 @@
 import os
 import sys
-from base64 import b64decode, b64encode
+from base64 import b64decode, b64encode, urlsafe_b64decode
 from decimal import Decimal
 from json import dumps, loads
 
@@ -197,3 +197,13 @@ def test_inicia_posts_to_inicia_endpoint():
 
     assert captured['url'] == 'https://sis-t.redsys.es:25443/sis/rest/iniciaPeticionREST'
     assert response.protocol_version == '2.1.0'
+
+
+def test_method_data_encodes_the_transaction_and_notification_url():
+    data = threeds.method_data(three_ds_server_trans_id='abc-123', notification_url='https://example.com/3ds-method')
+    assert '=' not in data and '+' not in data and '/' not in data
+    decoded = loads(urlsafe_b64decode(data + '=' * (-len(data) % 4)))
+    assert decoded == {
+        'threeDSServerTransID': 'abc-123',
+        'threeDSMethodNotificationURL': 'https://example.com/3ds-method',
+    }
