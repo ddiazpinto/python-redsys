@@ -143,6 +143,8 @@ response = await client.payment(
 ).send()
 ```
 
+After `send()`, `http_status`, `http_headers` and `raw_body` on the `Response` and on `ResponseError` hold the HTTP exchange; after `parse_response()` they are `None`.
+
 Transport-agnostic (do your own HTTP):
 
 ```python

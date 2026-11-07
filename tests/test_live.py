@@ -71,6 +71,7 @@ def test_live_inicia_returns_the_card_3ds_configuration(version):
 def test_live_inicia_payment_requests_the_card_data(version):
     response = _client(version).inicia_payment(**_operation(), **CARD).send()
     assert response.protocol_version.startswith('2.')
+    assert response.http_status == 200
 
 
 @pytest.mark.parametrize('version', VERSIONS)

@@ -162,6 +162,10 @@ def test_inicia_posts_to_inicia_endpoint():
     captured = {}
 
     class _FakeResponse:
+        status_code = 200
+        headers: dict = {}
+        text = ''
+
         def raise_for_status(self):
             return None
 
