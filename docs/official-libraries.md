@@ -45,6 +45,19 @@ PayGold: `pay_gold()` sends type 15, the value of the parameters table; the PayG
 | Default currency | Euro; `currency=` on the client sets another one |
 | Endpoint of one request | `endpoint=` on the operation, an HTTPS URL; `client.url(path)` with the paths in `redsys.environments` (Bizum Request-to-Pay) |
 
+## Payment methods and parameters
+
+| Concept | python-redsys |
+|---------|---------------|
+| Payment method on the redirect page | `pay_methods=` with `redsys.pay_methods` (`BIZUM`, `CARD`, `BANK_TRANSFER`, `PAYPAL`, `XPAY`, `GOOGLE_PAY`) |
+| Bizum Request-to-Pay | `endpoint=client.url(environments.RTP_TRATA_PATH)` on the operation; `rtp_status`, `rtp_response` and `rtp_description` on the `Response`; codes in `redsys.bizum` |
+| PayGold link | `pay_gold()` with `customer_mail`, `customer_mobile`, `customer_sms_text`, `p2f_expiry_date`; the link is `response.url_pago_2_fases` |
+| Google Pay and Apple Pay | `xpay_data` or `xpay_decoded_data`, with `xpay_type` and `xpay_origen` from `redsys.xpay` |
+| Order number | `redsys.generate_order(length=12)`: 4 digits, then letters and digits |
+| Code descriptions | `redsys.codes.describe(code, language)` for `Ds_Response`, `SISnnnn` and `BIZnnnnn` codes, in Spanish or English; `response.describe()` |
+| Option values | Constants in `redsys` (`cards`, `processed_pay_methods`, `secure_payment`, `emv3ds`, `options`, `sca`, `cof`, `languages`, `currencies`, `transactions`, `responses`) |
+| Parameter without a field | Passed by its wire name (`Ds_Merchant_...`), sent as given with an `UnknownParameterWarning` |
+
 ## Library behavior
 
 | Topic | python-redsys |
