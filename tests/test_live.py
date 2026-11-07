@@ -16,7 +16,7 @@ import pytest
 pytestmark = pytest.mark.skipif(os.environ.get('REDSYS_LIVE') != '1', reason='set REDSYS_LIVE=1 to run')
 httpx = pytest.importorskip('httpx')
 
-from redsys import cof, currencies, sca, threeds  # noqa: E402
+from redsys import cof, currencies, sca, threeds, transactions  # noqa: E402
 from redsys.clients import HMAC_SHA256_V1, HMAC_SHA512_V1, HMAC_SHA512_V2, DirectClient  # noqa: E402
 
 SECRET = 'sq7HjrUOBfKmC576ILgskD5srU870gJ7'
@@ -80,9 +80,11 @@ def test_live_payment_without_authentication_requires_sca(version):
     assert response.response_code == 195
 
 
-def _challenged_payment(client, operation, **fields):
+def _challenged_payment(client, operation, transaction_type=transactions.AUTHORIZATION, **fields):
     """Initialization, authentication with the simulator's challenge, and the final authorization."""
-    card_config = client.inicia(emv3ds=threeds.card_data(), **operation, **CARD).send()
+    card_config = client.inicia(
+        emv3ds=threeds.card_data(), transaction_type=transaction_type, **operation, **CARD
+    ).send()
     authentication = threeds.authentication_data(
         three_ds_server_trans_id=card_config.three_ds_server_trans_id,
         notification_url='https://example.com/3ds',
@@ -90,12 +92,17 @@ def _challenged_payment(client, operation, **fields):
         browser=BROWSER,
         three_ds_comp_ind='N',
     )
-    challenge = client.payment(emv3ds=authentication, **operation, **CARD, **fields).send()
+    challenge = client.request(transaction_type, emv3ds=authentication, **operation, **CARD, **fields).send()
     assert challenge.requires_challenge()
 
     cres = _answer_simulated_challenge(challenge)
     return client.challenge_response(
-        cres=cres, protocol_version=challenge.protocol_version, **operation, **CARD, **fields
+        cres=cres,
+        protocol_version=challenge.protocol_version,
+        transaction_type=transaction_type,
+        **operation,
+        **CARD,
+        **fields,
     ).send()
 
 
@@ -107,6 +114,25 @@ def test_live_challenged_payment_then_refund(version):
 
     refund = client.refund(**operation).send()
     assert refund.is_refunded()
+
+
+@pytest.mark.parametrize('version', VERSIONS)
+def test_live_challenged_preauthorization_then_void(version):
+    client, operation = _client(version), _operation()
+    preauthorization = _challenged_payment(client, operation, transactions.PREAUTHORIZATION)
+    assert preauthorization.is_paid()
+
+    void = client.void(**operation).send()
+    assert void.is_canceled()
+
+
+@pytest.mark.parametrize('version', VERSIONS)
+def test_live_challenged_payment_then_payment_cancellation(version):
+    client, operation = _client(version), _operation()
+    assert _challenged_payment(client, operation).is_paid()
+
+    cancellation = client.payment_cancellation(**operation).send()
+    assert cancellation.is_authorized()
 
 
 @pytest.mark.parametrize('version', VERSIONS)
