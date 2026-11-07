@@ -12,10 +12,13 @@ All notable changes to this project. Format follows [Keep a Changelog](https://k
 - `repr()` of a client shows its account and environment, never the secret key.
 - `currency` is optional and defaults to the euro; `currency=` on a client sets another default.
 - `void()` (type 9) and `payment_cancellation()` (type 45) on the direct clients, and `transactions.VOID`.
+- Named operations on the direct clients: `authentication()`, `authentication_confirmation()`, `pay_gold()`, `authentication_confirmation_cancellation()` and `partial_confirmation()`.
+- `inicia_payment()`, `inicia_preauthorization()` and `inicia_authentication()`, which default `emv3ds` to `threeds.card_data()`, and `challenge_response()` for the step after a 3DS challenge.
 
 ### Changed
 
 - `client.endpoint`, `inicia_endpoint` and the `REAL_ENDPOINT` / `TEST_ENDPOINT` class constants stay readable, but endpoints now resolve from the environment: a subclass that overrides those constants no longer changes where requests go.
+- A `Ds_Merchant_TransactionType` that differs from the operation raises `ValidationError`; before, it was signed and sent. On an operation method, a different `transaction_type` raises `ValidationError` instead of `TypeError`.
 
 ### Deprecated
 
@@ -23,7 +26,7 @@ All notable changes to this project. Format follows [Keep a Changelog](https://k
 
 ### Fixed
 
-- A `merchant_code` or `terminal` passed by its wire name no longer leaves a stray key in the signed parameters.
+- A `merchant_code`, `terminal` or `transaction_type` passed by its wire name no longer leaves a stray key in the signed parameters.
 
 ### Security
 

@@ -20,6 +20,7 @@ from logging import getLogger
 from re import fullmatch, sub
 from warnings import warn
 
+from redsys import threeds
 from redsys.api import environments, transactions
 from redsys.crypto import (
     DEFAULT_SIGNATURE_VERSION,
@@ -184,12 +185,20 @@ class Client:
         """Build, validate and sign any operation by its transaction type.
 
         The single funnel every named operation delegates to. Use it directly
-        for transaction types without a dedicated method (e.g. ``PAY_GOLD``).
+        for transaction types without a dedicated method (e.g. ``REFUND_CANCELLATION``).
+        Raises ``ValidationError`` if ``fields`` name a different transaction type.
         """
+        return self._operation(transaction_type, fields)
+
+    def _operation(self, transaction_type: int, fields: dict) -> Request:
+        return self._prepare(self._message(transaction_type, fields))
+
+    def _message(self, transaction_type: int, fields: dict):
         data = self._inject(fields)
-        data.setdefault('transaction_type', transaction_type)
-        model = self._model_for(transaction_type)(**data)
-        return self._prepare(model)
+        for name in ('transaction_type', BaseRequest.model_fields['transaction_type'].alias):
+            if str(data.pop(name, transaction_type)) != str(transaction_type):
+                raise ValidationError(f'{name} contradicts the operation, transaction type {transaction_type}.')
+        return self._model_for(transaction_type)(**data, transaction_type=transaction_type)
 
     def _prepare(self, model) -> Request:
         return self._build_request(model, endpoint=self.endpoint)
@@ -241,10 +250,10 @@ class RedirectClient(Client):
     _MODELS = {transactions.PREAUTHORIZATION: RedirectPreauthorizationMessage}
 
     def payment(self, **fields) -> Request:
-        return self.request(transactions.AUTHORIZATION, **fields)
+        return self._operation(transactions.AUTHORIZATION, fields)
 
     def preauthorization(self, **fields) -> Request:
-        return self.request(transactions.PREAUTHORIZATION, **fields)
+        return self._operation(transactions.PREAUTHORIZATION, fields)
 
 
 def _require_httpx():
@@ -253,6 +262,9 @@ def _require_httpx():
     except ImportError as exc:
         raise ImportError('Sending requires httpx. Install with: pip install "python-redsys[http]".') from exc
     return httpx
+
+
+_EMV3DS_WIRE_NAME = 'Ds_Merchant_EMV3DS'
 
 
 class _DirectBase(Client):
@@ -283,24 +295,39 @@ class _DirectBase(Client):
         return self._url(environments.INICIA_PATH)
 
     def payment(self, **fields) -> Request:
-        return self.request(transactions.AUTHORIZATION, **fields)
+        return self._operation(transactions.AUTHORIZATION, fields)
 
     def preauthorization(self, **fields) -> Request:
-        return self.request(transactions.PREAUTHORIZATION, **fields)
+        return self._operation(transactions.PREAUTHORIZATION, fields)
 
     def confirmation(self, **fields) -> Request:
-        return self.request(transactions.CONFIRMATION, **fields)
+        return self._operation(transactions.CONFIRMATION, fields)
+
+    def partial_confirmation(self, **fields) -> Request:
+        return self._operation(transactions.PARTIAL_CONFIRMATION, fields)
+
+    def authentication(self, **fields) -> Request:
+        return self._operation(transactions.AUTHENTICATION, fields)
+
+    def authentication_confirmation(self, **fields) -> Request:
+        return self._operation(transactions.AUTHENTICATION_CONFIRMATION, fields)
+
+    def authentication_confirmation_cancellation(self, **fields) -> Request:
+        return self._operation(transactions.AUTHENTICATION_CONFIRMATION_CANCELLATION, fields)
+
+    def pay_gold(self, **fields) -> Request:
+        return self._operation(transactions.PAY_GOLD, fields)
 
     def refund(self, **fields) -> Request:
-        return self.request(transactions.REFUND, **fields)
+        return self._operation(transactions.REFUND, fields)
 
     def void(self, **fields) -> Request:
         """Void a preauthorization (transaction type 9)."""
-        return self.request(transactions.VOID, **fields)
+        return self._operation(transactions.VOID, fields)
 
     def payment_cancellation(self, **fields) -> Request:
         """Cancel a payment after a merchant time-out or technical error (transaction type 45)."""
-        return self.request(transactions.PAYMENT_CANCELLATION, **fields)
+        return self._operation(transactions.PAYMENT_CANCELLATION, fields)
 
     def cancellation(self, **fields) -> Request:
         """Deprecated: sends type 9; use ``void()``, or ``payment_cancellation()`` for type 45."""
@@ -317,11 +344,41 @@ class _DirectBase(Client):
         model = self._DEFAULT_MODEL(**self._inject(fields))
         return self._prepare(model, endpoint=self.inicia_endpoint)
 
+    def inicia_payment(self, **fields) -> Request:
+        """3-D Secure step 1 for a payment; ``emv3ds`` defaults to ``threeds.card_data()``."""
+        return self._inicia(transactions.AUTHORIZATION, fields)
+
+    def inicia_preauthorization(self, **fields) -> Request:
+        """3-D Secure step 1 for a preauthorization; ``emv3ds`` defaults to ``threeds.card_data()``."""
+        return self._inicia(transactions.PREAUTHORIZATION, fields)
+
+    def inicia_authentication(self, **fields) -> Request:
+        """3-D Secure step 1 for an authentication; ``emv3ds`` defaults to ``threeds.card_data()``."""
+        return self._inicia(transactions.AUTHENTICATION, fields)
+
+    def _inicia(self, transaction_type: int, fields: dict) -> Request:
+        if 'emv3ds' not in fields and _EMV3DS_WIRE_NAME not in fields:
+            fields['emv3ds'] = threeds.card_data()
+        return self._prepare(self._message(transaction_type, fields), endpoint=self.inicia_endpoint)
+
+    def challenge_response(
+        self, *, cres: str, protocol_version: str, transaction_type: int = transactions.AUTHORIZATION, **fields
+    ) -> Request:
+        """3-D Secure final step after the challenge; ``transaction_type`` is the one authenticated."""
+        if 'emv3ds' in fields or _EMV3DS_WIRE_NAME in fields:
+            raise ValidationError('challenge_response() builds emv3ds from cres and protocol_version.')
+        emv3ds = threeds.challenge_response(cres=cres, protocol_version=protocol_version)
+        return self._operation(transaction_type, {**fields, 'emv3ds': emv3ds})
+
     def _prepare(self, model, endpoint: str | None = None) -> Request:
         return self._build_request(model, sender=self._send, endpoint=endpoint or self.endpoint)
 
     def _send(self, request, **httpx_kwargs):
         raise NotImplementedError
+
+    def _parse_http_response(self, http_response) -> Response:
+        http_response.raise_for_status()
+        return self.parse_response(http_response.json())
 
 
 class DirectClient(_DirectBase):
@@ -330,9 +387,7 @@ class DirectClient(_DirectBase):
     def _send(self, request, **httpx_kwargs):
         httpx = _require_httpx()
         httpx_kwargs.setdefault('timeout', DEFAULT_TIMEOUT)
-        http_response = httpx.post(request.endpoint, json=request.to_dict(), **httpx_kwargs)
-        http_response.raise_for_status()
-        return self.parse_response(http_response.json())
+        return self._parse_http_response(httpx.post(request.endpoint, json=request.to_dict(), **httpx_kwargs))
 
 
 class AsyncDirectClient(_DirectBase):
@@ -343,5 +398,4 @@ class AsyncDirectClient(_DirectBase):
         httpx_kwargs.setdefault('timeout', DEFAULT_TIMEOUT)
         async with httpx.AsyncClient() as client:
             http_response = await client.post(request.endpoint, json=request.to_dict(), **httpx_kwargs)
-        http_response.raise_for_status()
-        return self.parse_response(http_response.json())
+        return self._parse_http_response(http_response)

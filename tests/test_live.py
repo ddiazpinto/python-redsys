@@ -68,6 +68,12 @@ def test_live_inicia_returns_the_card_3ds_configuration(version):
 
 
 @pytest.mark.parametrize('version', VERSIONS)
+def test_live_inicia_payment_requests_the_card_data(version):
+    response = _client(version).inicia_payment(**_operation(), **CARD).send()
+    assert response.protocol_version.startswith('2.')
+
+
+@pytest.mark.parametrize('version', VERSIONS)
 def test_live_payment_without_authentication_requires_sca(version):
     response = _client(version).payment(direct_payment='true', **_operation(), **CARD).send()
     assert response.response_code == 195
@@ -87,8 +93,9 @@ def _challenged_payment(client, operation, **fields):
     assert challenge.requires_challenge()
 
     cres = _answer_simulated_challenge(challenge)
-    final = threeds.challenge_response(cres=cres, protocol_version=challenge.protocol_version)
-    return client.payment(emv3ds=final, **operation, **CARD, **fields).send()
+    return client.challenge_response(
+        cres=cres, protocol_version=challenge.protocol_version, **operation, **CARD, **fields
+    ).send()
 
 
 @pytest.mark.parametrize('version', VERSIONS)
