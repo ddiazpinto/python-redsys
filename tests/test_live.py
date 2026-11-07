@@ -21,6 +21,7 @@ from redsys.clients import HMAC_SHA256_V1, HMAC_SHA512_V1, HMAC_SHA512_V2, Direc
 
 SECRET = 'sq7HjrUOBfKmC576ILgskD5srU870gJ7'
 MERCHANT_CODE = '999008881'
+API_KEY = 'TEST_OTk5MDA4ODgxXzAwMV9zcTdIanJVT0JmS21DNTc2SUxnc2tENXNyVTg3MGdKNw'
 CARD = {'pan': '4548810000000003', 'expiry_date': '4912', 'cvv2': '123'}  # always challenges
 BROWSER = threeds.browser_info(
     accept_header='text/html',
@@ -36,6 +37,10 @@ VERSIONS = [HMAC_SHA512_V2, HMAC_SHA512_V1, HMAC_SHA256_V1]
 
 def _client(version):
     return DirectClient(SECRET, merchant_code=MERCHANT_CODE, terminal=1, sandbox=True, signature_version=version)
+
+
+def _api_key_client(version):
+    return DirectClient.from_api_key(API_KEY, signature_version=version)
 
 
 def _operation():
@@ -94,6 +99,12 @@ def test_live_challenged_payment_then_refund(version):
 
     refund = client.refund(**operation).send()
     assert refund.is_refunded()
+
+
+@pytest.mark.parametrize('version', VERSIONS)
+def test_live_client_built_from_an_api_key(version):
+    response = _api_key_client(version).payment(direct_payment='true', **_operation(), **CARD).send()
+    assert response.response_code == 195
 
 
 @pytest.mark.parametrize('version', VERSIONS)

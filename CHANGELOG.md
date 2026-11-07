@@ -7,7 +7,9 @@ All notable changes to this project. Format follows [Keep a Changelog](https://k
 ### Added
 
 - Named environments: `environment=` on every client (`DESA`, `INTE`, `TEST`, `PROD`, in `redsys.environments`) resolves the redirect and REST endpoints. `sandbox` keeps working; a contradictory pair raises `ValidationError`.
+- `from_api_key()` on every client builds it from a RedSys API key.
 - `Request.endpoint`: the URL each request goes to.
+- `repr()` of a client shows its account and environment, never the secret key.
 
 ### Changed
 
