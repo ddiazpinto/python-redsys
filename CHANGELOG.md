@@ -17,6 +17,7 @@ All notable changes to this project. Format follows [Keep a Changelog](https://k
 - `http_status`, `http_headers` and `raw_body` on `Response` and `ResponseError` after `send()`.
 - `authentication()` (type 7) and `refund_without_original()` (type 34) on the redirect client, and `transactions.REDIRECT_TRANSACTION_TYPES`.
 - `refund_without_original()` and `pay_gold_expiry_change()` (type 51, `transactions.PAY_GOLD_EXPIRY_CHANGE`) on the direct clients.
+- `redsys.codes.describe(code, language='es')`: the meaning of a `Ds_Response`, `SISnnnn` or Bizum `BIZnnnnn` code in Spanish or English, chosen by ISO code or RedSys's numeric one; `''` for an unknown code. `Response.describe()` does the same for a response, and `redsys.responses` names the documented `Ds_Response` codes.
 - `endpoint=` on every operation and `request()`: an HTTPS URL that replaces the client's for that request, never signed. `client.url(path)` joins the environment host and a path, and `redsys.environments` names the Bizum Request-to-Pay paths (`RTP_CHECK_PATH`, `RTP_TRATA_PATH`, `RTP_BACKUP_PATH`, `RTP_BACKUP_VALIDATION_PATH`).
 - `docs/official-libraries.md`: equivalences for PHP and Java integrators.
 
@@ -24,6 +25,7 @@ All notable changes to this project. Format follows [Keep a Changelog](https://k
 
 - `client.endpoint`, `inicia_endpoint` and the `REAL_ENDPOINT` / `TEST_ENDPOINT` class constants stay readable, but endpoints now resolve from the environment: a subclass that overrides those constants no longer changes where requests go.
 - A `Ds_Merchant_TransactionType` that differs from the operation raises `ValidationError`; before, it was signed and sent. On an operation method, a different `transaction_type` raises `ValidationError` instead of `TypeError`.
+- `docs/response-codes.md` lists every documented `Ds_Response` code with its constant and the text `describe()` returns, plus the Bizum codes.
 - `RedirectClient.request()` raises `ValidationError` for a transaction type other than 0, 1, 7 and 34, the ones the redirect connection accepts.
 
 ### Deprecated

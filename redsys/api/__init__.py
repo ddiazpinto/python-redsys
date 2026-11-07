@@ -1,1 +1,1 @@
-"""Constant tables of RedSys values: currencies, environments, languages, transaction types, COF and SCA codes."""
+"""Constant tables of RedSys values, one module per parameter or code family."""

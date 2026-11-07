@@ -54,6 +54,6 @@ if response.is_paid():
 ```
 
 - Predicates are methods. `response.is_paid` without parentheses is always truthy.
-- `response.code` is `response.response_code`. `response.message` is gone; meanings are in [`response-codes.md`](response-codes.md).
+- `response.code` is `response.response_code`. `response.message` is `response.describe()`, in Spanish by default; meanings are in [`response-codes.md`](response-codes.md).
 - `response.parameters` is `response.model_dump()`; unlisted parameters are in `response.model_extra`. `merchant_cof_txnid` is `cof_txnid`.
 - A signature mismatch still raises `ValueError`. A RedSys error payload raises `redsys.exceptions.ResponseError`.
