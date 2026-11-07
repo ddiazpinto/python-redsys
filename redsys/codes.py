@@ -10,6 +10,7 @@ describe('BIZ00009')      # Bizum Request-to-Pay code
 from re import fullmatch
 
 from redsys import _code_texts
+from redsys.api import responses
 
 # Position of each language in the (English, Spanish) text pairs.
 _TEXT_INDEX = {'en': 0, 'es': 1, 2: 0, 1: 1}
@@ -36,7 +37,7 @@ def _texts(code) -> tuple[str, str] | None:
     if not fullmatch(r'[0-9]{1,4}', code):
         return None
     number = int(code)
-    if number <= 99:
+    if number <= responses.AUTHORIZED_LAST:
         return _code_texts.AUTHORIZED
     if number in _code_texts.DS_RESPONSE:
         return _code_texts.DS_RESPONSE[number]

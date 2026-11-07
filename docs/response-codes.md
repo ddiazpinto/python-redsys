@@ -1,12 +1,14 @@
 # RedSys response codes
 
-`redsys.codes.describe(code, language="es")` returns the meaning of a `Ds_Response` code, an `SISnnnn` error code or a Bizum `BIZnnnnn` code, in Spanish (`"es"`, `languages.SPANISH`) or English (`"en"`, `languages.ENGLISH`); an unknown code or language gives `""`. `response.describe()` does the same for a parsed response. The wording is this project's own, written from RedSys's public tables; the code is the stable contract, so user-facing messages are best built from it.
+`redsys.codes.describe(code, language="es")` returns the meaning of a `Ds_Response` code, an `SISnnnn` error code or a Bizum `BIZnnnnn` code, in Spanish (`"es"`, `languages.SPANISH`) or English (`"en"`, `languages.ENGLISH`); an unknown code or language gives `""`. `response.describe(language)` gives the meaning of a parsed response's `Ds_Response`, or of its `Ds_ErrorCode` when there is none. The texts are written from RedSys's public tables.
 
 ```python
+from redsys import languages, responses
 from redsys.codes import describe
 
-describe("0195", "en")  # 'Soft decline: SCA authentication required'
-describe("SIS0051")     # Spanish by default
+describe(responses.SCA_REQUIRED, languages.ENGLISH)  # 'Soft decline: SCA authentication required'
+describe("0195", "en")                              # the same, from the wire value
+describe("SIS0051")                                 # Spanish by default
 ```
 
 ## Outcome by range
@@ -18,7 +20,7 @@ describe("SIS0051")     # Spanish by default
 | `0400` | Authorized cancellation | `is_canceled()` |
 | other | Declined, pending or error | none |
 
-`is_authorized()` is true for any of paid, refunded or canceled.
+`is_authorized()` is true for any of paid, refunded or canceled. Constants: `responses.AUTHORIZED` to `responses.AUTHORIZED_LAST`, `responses.REFUND_OR_CONFIRMATION_AUTHORIZED` and `responses.CANCELLATION_AUTHORIZED`.
 
 ## Ds_Response codes
 
@@ -99,7 +101,7 @@ Constants in `redsys.api.responses` (also `from redsys import responses`).
 
 ## SIS error codes
 
-`SISnnnn` codes arrive in `errorCode` (REST, raised as `ResponseError`) or `Ds_ErrorCode` (redirect). Each has a numeric twin `9nnn` that may arrive in `Ds_Response`; a `9nnn` code without its own row above has the meaning of `SIS0nnn`. `describe()` covers the 634 codes of RedSys's public table.
+`SISnnnn` codes arrive in `errorCode` (REST, raised as `ResponseError`) or `Ds_ErrorCode` (redirect). Each has a numeric twin `9nnn` that may arrive in `Ds_Response`; a `9nnn` code without its own row above has the meaning of `SIS0nnn`. `describe()` covers every code of RedSys's public table.
 
 ## Bizum codes
 

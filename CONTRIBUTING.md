@@ -35,7 +35,7 @@ After changing dependencies in `pyproject.toml`, run `uv lock` and commit `uv.lo
 
 ## Live tests
 
-`tests/test_live.py` runs the direct connection end to end against the RedSys test environment with RedSys's public test merchant: 3DS initialization, a payment that requires SCA, a challenged payment through RedSys's simulator ACS and its refund, and a stored-card token charged as a merchant-initiated payment, once per signature version. It needs network access and runs only on request:
+`tests/test_live.py` runs the direct connection end to end against the RedSys test environment with RedSys's public test merchant, once per signature version: 3DS initialization, a payment that requires SCA, frictionless payments with and without the 3DSMethod step, challenged operations through RedSys's simulator ACS followed by a refund, a void and a payment cancellation, a client built from an API key, and a stored-card token charged as a merchant-initiated payment. It needs network access and runs only on request:
 
 ```bash
 make live   # REDSYS_LIVE=1 uv run --extra http pytest -q tests/test_live.py
@@ -45,7 +45,7 @@ In GitHub Actions, run the *Live* workflow manually.
 
 ## Changing the models
 
-The models live in `redsys/models.py`: one Pydantic class per message, each field declared with its RedSys wire name as the alias and the constraints of the integration guides listed in the module docstring. A new parameter is a field on the message (or on the shared redirect or direct field set), a test that checks its wire name and a changelog line. Endpoint URLs are in `redsys/clients.py`.
+The models live in `redsys/models.py`: one Pydantic class per message, each field declared with its RedSys wire name as the alias and the constraints of the integration guides listed in the module docstring. A new parameter is a field on the message (or on the shared redirect or direct field set), a test that checks its wire name and a changelog line. Hosts and endpoint paths are in `redsys/api/environments.py`; a value with a closed set gets named constants in a `redsys/api/` module.
 
 ## Pull requests
 

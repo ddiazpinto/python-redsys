@@ -32,10 +32,10 @@ fields = client.payment(
 ).to_dict()
 ```
 
-- `merchant_code` and `terminal` (an integer) move to the constructor. `sandbox=True` selects the test endpoint, exposed as `client.endpoint`.
+- `merchant_code` and `terminal` (an integer) move to the constructor. `sandbox=True` selects the test endpoint, exposed as `client.endpoint` and `request.endpoint`.
 - The method chooses the operation: `payment()`, `preauthorization()`, `authentication()` and `refund_without_original()`, plus `confirmation()`, `refund()`, `void()` and `payment_cancellation()` on the direct clients. Other types go through `client.request(transaction_type, ...)`; the redirect client accepts types 0, 1, 7 and 34 only.
 - `to_dict()` returns `str` values; the `.decode()` before rendering the form is no longer needed.
-- `payment_method` is now `pay_methods` and `mobile_number` is `bizum_mobile_number`; a 1.x name raises `ValidationError` naming its replacement. `transaction_date` (`Ds_Merchant_TransactionDate`, `yyyy-mm-dd`) is accepted by `refund()` only.
+- `payment_method` is now `pay_methods` and `mobile_number` is `bizum_mobile_number`; a 1.x name raises `pydantic.ValidationError` naming its replacement. `transaction_date` (`Ds_Merchant_TransactionDate`, `yyyy-mm-dd`) is accepted by `refund()` only.
 - `redsys.constants` splits into `currencies`, `languages` and `transactions` (`from redsys import ...`). Transaction types and languages are integers: `STANDARD_PAYMENT` is `transactions.AUTHORIZATION`, `"001"` is `languages.SPANISH`. Types 5, 6, O, P, Q, R and S are no longer in RedSys's table and have no 2.x equivalent.
 - `order` accepts 4 to 12 characters; 1.x required exactly 12.
 
@@ -54,6 +54,6 @@ if response.is_paid():
 ```
 
 - Predicates are methods. `response.is_paid` without parentheses is always truthy.
-- `response.code` is `response.response_code`. `response.message` is `response.describe()`, in Spanish by default; meanings are in [`response-codes.md`](response-codes.md).
+- `response.code` is `response.response_code`. `response.message` is `response.describe()`, in Spanish by default (`response.describe("en")` for English); meanings are in [`response-codes.md`](response-codes.md).
 - `response.parameters` is `response.model_dump()`; unlisted parameters are in `response.model_extra`. `merchant_cof_txnid` is `cof_txnid`.
 - A signature mismatch still raises `ValueError`. A RedSys error payload raises `redsys.exceptions.ResponseError`.

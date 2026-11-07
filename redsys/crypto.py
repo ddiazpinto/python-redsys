@@ -19,8 +19,8 @@ test environment); HMAC_SHA256_V1 uses the raw derived bytes.
 
 HMAC_SHA512_V1 is the REST guide 4.0.1 scheme; HMAC_SHA512_V2 (the default) is the one the
 redirection guide 4.1 and later uses; HMAC_SHA256_V1 is still accepted (REST guide 4.0.1,
-Anexo 2). The cipher parameters are pinned by a
-known-answer test against RedSys's official worked example (see tests/test_crypto.py).
+Anexo 2). The cipher parameters are pinned by a known-answer test against RedSys's official
+worked example (see tests/test_crypto.py).
 """
 
 from base64 import b64decode, b64encode, urlsafe_b64encode
@@ -84,7 +84,7 @@ class Sha512V1Signer(Signer):
 
     def sign(self, order: str, merchant_parameters: bytes) -> bytes:
         # The HMAC key is the Base64 text of the derived key, not its raw bytes
-        # (confirmed live against the RedSys test environment; raw bytes -> SIS0042).
+        # (confirmed against the RedSys test environment, where raw bytes give SIS0042).
         derived = b64encode(self._derive_key(order))
         # REST manual: Base64URL with the '=' padding kept.
         return urlsafe_b64encode(HMAC(derived, merchant_parameters, sha512).digest())
@@ -96,12 +96,12 @@ class Sha512V2Signer(Sha512V1Signer):
     def encode_parameters(self, parameters: dict) -> bytes:
         # V2 endpoints decode Ds_MerchantParameters as unpadded Base64URL: the 3DS
         # initialization rejects standard or padded Base64 with SIS0430 (verified
-        # live 2026-10-25).
+        # against the test environment).
         return urlsafe_b64encode(dumps(parameters, sort_keys=True).encode('utf-8')).rstrip(b'=')
 
     def sign(self, order: str, merchant_parameters: bytes) -> bytes:
         # Same derived key and HMAC as HMAC_SHA512_V1; only the '=' padding goes
-        # (verified live 2026-10-25).
+        # (verified against the test environment).
         return super().sign(order, merchant_parameters).rstrip(b'=')
 
 

@@ -20,8 +20,13 @@ HOSTS = {
 }
 
 REDIRECT_PATH = '/sis/realizarPago'
+"""Redirect connection."""
+
 INICIA_PATH = '/sis/rest/iniciaPeticionREST'
+"""Direct connection: 3-D Secure initialization."""
+
 TRATA_PATH = '/sis/rest/trataPeticionREST'
+"""Direct connection: operations."""
 
 RTP_CHECK_PATH = '/sis/rest/RTP/checkRtpUsuario'
 """Bizum Request-to-Pay: whether the customer can receive a payment request."""

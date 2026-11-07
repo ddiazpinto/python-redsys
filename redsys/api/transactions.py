@@ -1,3 +1,5 @@
+"""Values of ``Ds_Merchant_TransactionType``."""
+
 AUTHORIZATION = 0
 """Authorization."""
 
@@ -14,7 +16,7 @@ AUTHENTICATION = 7
 """Authentication."""
 
 AUTHENTICATION_CONFIRMATION = 8
-"""Authentication confirmation"""
+"""Authentication confirmation."""
 
 VOID = 9
 """Void of a preauthorization ("Anulación de preautorización")."""
@@ -26,16 +28,16 @@ REPLACEMENT_PREAUTHORIZATION = 11
 """Replacement preauthorization: extends an existing preauthorization."""
 
 PAY_GOLD = 15
-"""Pay gold"""
+"""PayGold request: a payment link sent by SMS or e-mail."""
 
 AUTHENTICATION_PUCE = 17
-"""PUCE authentication"""
+"""PUCE authentication."""
 
 REFUND_WITHOUT_ORIGINAL = 34
-"""Refund without original"""
+"""Refund without original."""
 
 BETTING_PRICE = 37
-"""Betting price"""
+"""Betting prize."""
 
 PAY_GOLD_AUTHORIZATION = 38
 """PayGold authorization: the cardholder completes a PayGold request (type 15); sent by RedSys, not the merchant."""

@@ -1,17 +1,13 @@
-"""Client entry points for the RedSys platform.
+"""Clients for the RedSys redirect and direct connections.
 
-The client is the single entry point: it holds the credentials and account
-identity (secret key, merchant code, terminal, signature version) and acts as
-the factory for every operation. You never build or import a request model --
-call an operation method (``payment``, ``refund``, ...) or the low-level
-``request()`` they all delegate to, and you get back a ``Request``:
+A client holds the credentials and the account (secret key, merchant code, terminal,
+environment, signature version) and builds every operation as a signed ``Request``:
 
-    client = DirectClient(secret_key='...', merchant_code='...', terminal=1, sandbox=True)
-    response = client.payment(order='000000001', amount=Decimal('10.56'), currency=978).send()
+    client = DirectClient(secret_key='...', merchant_code='999008881', terminal=1, sandbox=True)
+    response = client.payment(order=generate_order(), amount=Decimal('10.56')).send()
 
-Redirect requests end in ``.to_dict()`` (the browser submits them); direct
-requests end in ``.send()`` (the library performs the REST call). Both verify
-and parse incoming results through ``client.parse_response(payload)``.
+A redirect request ends in ``to_dict()``, the form the browser posts; a direct request
+ends in ``send()``. ``parse_response()`` verifies and parses a received result.
 """
 
 from base64 import b64decode
@@ -52,7 +48,7 @@ from redsys.request import (
 
 logger = getLogger(__name__)
 
-# Default HTTP timeout (seconds) for direct-connection network calls; override per call.
+# Seconds; ``send(timeout=...)`` overrides it.
 DEFAULT_TIMEOUT = 30
 
 __all__ = [
@@ -134,7 +130,7 @@ class Client:
     TEST_ENDPOINT: str | None = None
     _PATH: str | None = None
 
-    #: transaction_type -> request model. Unmapped types fall back to _DEFAULT_MODEL.
+    #: Request model per transaction type; other types use ``_DEFAULT_MODEL``.
     _DEFAULT_MODEL: type | None = None
     _MODELS: dict[int, type] = {}
     #: The transaction types the connection accepts; ``None`` leaves the check to the model.
@@ -182,7 +178,7 @@ class Client:
             raise ValidationError('path must start with "/".')
         return f'{environments.HOSTS[self.environment]}{path}'
 
-    # -- request building -------------------------------------------------
+    # == Request building ==
     def _inject(self, fields: dict) -> dict:
         """Merge the client's account defaults into a call's fields (call wins, by either name)."""
         data = dict(fields)
@@ -201,12 +197,11 @@ class Client:
     def request(self, transaction_type: int, **fields) -> Request:
         """Build, validate and sign any operation by its transaction type.
 
-        The single funnel every named operation delegates to. Use it directly
-        for transaction types without a dedicated method (e.g. ``REFUND_CANCELLATION``).
+        For the types without a method, such as ``transactions.REFUND_CANCELLATION``.
         Raises ``ValidationError`` if ``fields`` name a different transaction type, or if
-        the connection does not accept it (the redirect connection takes 0, 1, 7 and 34).
-        Every operation takes ``endpoint=``, an HTTPS URL that replaces the client's for
-        that request only; it is not signed or sent as a parameter.
+        the connection does not accept it (the redirect connection takes
+        ``transactions.REDIRECT_TRANSACTION_TYPES``). Every operation takes ``endpoint=``,
+        an HTTPS URL that replaces the client's for that request only; it is not signed.
         """
         return self._operation(transaction_type, fields)
 
@@ -236,7 +231,7 @@ class Client:
         signature = signer.sign(model.get_order(), merchant_parameters)
         return Request(merchant_parameters, signature, version, sender=sender, endpoint=endpoint)
 
-    # -- response ---------------------------------------------------------
+    # == Response parsing ==
     def parse_response(self, payload: dict) -> Response:
         """Verify the signature and parse a received payload into a ``Response``.
 
@@ -253,18 +248,15 @@ class Client:
             merchant_parameters = merchant_parameters.encode('utf-8')
         version = payload.get(SIGNATURE_VERSION, DEFAULT_SIGNATURE_VERSION)
         response = Response.from_merchant_parameters(merchant_parameters)
-        # A signed result always carries Ds_Order; '' can never match, so a
-        # missing order simply fails verification below.
+        # A signed result always carries Ds_Order; without it, '' makes verification fail.
         expected = get_signer(self._secret_key, version).sign(response.get_order() or '', merchant_parameters)
-        # Constant-time comparison to avoid leaking the signature via timing.
         if not compare_digest(_normalize_signature(payload[SIGNATURE]), _normalize_signature(expected)):
             raise ValueError('Signature is not valid.')
         return response
 
 
 class RedirectClient(Client):
-    """Redirect connection (secure method): builds the signed POST parameters the
-    browser submits to RedSys. The library performs no HTTP and no redirect."""
+    """Redirect connection: builds the signed form fields the browser posts to RedSys; performs no HTTP."""
 
     # Endpoints per the redirection guide 4.2 (RS.TE.CEL.MAN.0039).
     _PATH = environments.REDIRECT_PATH
@@ -301,7 +293,7 @@ _EMV3DS_WIRE_NAME = 'Ds_Merchant_EMV3DS'
 
 
 class _DirectBase(Client):
-    """Shared REST direct-connection logic (transport-agnostic)."""
+    """Operations of the REST direct connection, independent of the HTTP transport."""
 
     # Endpoints per the REST guide 4.0.1 (RS.TE.CEL.MAN.0037).
     _PATH = environments.TRATA_PATH
@@ -381,7 +373,7 @@ class _DirectBase(Client):
         return self.void(**fields)
 
     def inicia(self, **fields) -> Request:
-        """3-D Secure step 1: build a request bound to the iniciaPeticionREST endpoint."""
+        """3-D Secure initialization (iniciaPeticionREST) from the given fields, ``emv3ds`` included."""
         fields = dict(fields)
         endpoint = _endpoint_option(fields)
         model = self._DEFAULT_MODEL(**self._inject(fields))
@@ -431,7 +423,7 @@ class _DirectBase(Client):
 
 
 class DirectClient(_DirectBase):
-    """Synchronous REST direct-connection client. Requires the httpx extra."""
+    """Synchronous REST direct-connection client; ``send()`` requires the ``http`` extra (httpx)."""
 
     def _send(self, request, **httpx_kwargs):
         httpx = _require_httpx()
@@ -440,7 +432,7 @@ class DirectClient(_DirectBase):
 
 
 class AsyncDirectClient(_DirectBase):
-    """Asynchronous REST direct-connection client (httpx.AsyncClient). Requires the httpx extra."""
+    """Asynchronous REST direct-connection client; ``await send()`` requires the ``http`` extra (httpx)."""
 
     async def _send(self, request, **httpx_kwargs):
         httpx = _require_httpx()

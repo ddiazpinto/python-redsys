@@ -9,19 +9,11 @@ def _as_text(value):
 
 
 class Request:
-    """A signed request, ready to serialize or send -- the return of every operation.
+    """A signed request, the return of every operation.
 
-    Holds the three fields RedSys exchanges (the Base64 merchant parameters, the
-    signature over them, and the signature version) and the two ways to hand it
-    off:
-
-    - ``to_dict()`` -- the three ``Ds_*`` fields to POST (redirect form fields or
-      REST JSON body). Always available.
-    - ``send()`` -- performs the REST call and returns the parsed ``Response``.
-      Only direct-connection clients bind a sender; for redirect requests (the
-      browser submits them) it raises ``TypeError`` -- use ``to_dict()``.
-
-    Async clients bind an awaitable sender, so ``await request.send()`` works.
+    ``to_dict()`` gives the three ``Ds_*`` fields to post: the redirect form fields or the
+    REST JSON body. ``send()`` performs the REST call and returns the parsed ``Response``;
+    it is awaitable on ``AsyncDirectClient`` and raises ``TypeError`` on a redirect request.
     """
 
     def __init__(
