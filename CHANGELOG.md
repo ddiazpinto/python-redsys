@@ -17,6 +17,7 @@ All notable changes to this project. Format follows [Keep a Changelog](https://k
 - `http_status`, `http_headers` and `raw_body` on `Response` and `ResponseError` after `send()`.
 - `authentication()` (type 7) and `refund_without_original()` (type 34) on the redirect client, and `transactions.REDIRECT_TRANSACTION_TYPES`.
 - `refund_without_original()` and `pay_gold_expiry_change()` (type 51, `transactions.PAY_GOLD_EXPIRY_CHANGE`) on the direct clients.
+- `endpoint=` on every operation and `request()`: an HTTPS URL that replaces the client's for that request, never signed. `client.url(path)` joins the environment host and a path, and `redsys.environments` names the Bizum Request-to-Pay paths (`RTP_CHECK_PATH`, `RTP_TRATA_PATH`, `RTP_BACKUP_PATH`, `RTP_BACKUP_VALIDATION_PATH`).
 - `docs/official-libraries.md`: equivalences for PHP and Java integrators.
 
 ### Changed

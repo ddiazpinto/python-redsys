@@ -43,6 +43,7 @@ PayGold: `pay_gold()` sends type 15, the value of the parameters table; the PayG
 | Environment | `environment=` (`DESA`, `INTE`, `TEST`, `PROD`), or `sandbox=` for `TEST` and `PROD` |
 | Signature version | `signature_version=`; `HMAC_SHA512_V2` by default |
 | Default currency | Euro; `currency=` on the client sets another one |
+| Endpoint of one request | `endpoint=` on the operation, an HTTPS URL; `client.url(path)` with the paths in `redsys.environments` (Bizum Request-to-Pay) |
 
 ## Library behavior
 

@@ -145,6 +145,16 @@ response = await client.payment(
 ).send()
 ```
 
+`endpoint=` on any operation sends that request to another HTTPS URL, for example Bizum Request-to-Pay:
+
+```python
+from redsys import environments
+
+client.payment(order="000000001", amount=Decimal("1.00"), pay_methods="z",
+               bizum_mobile_number="+34700000000",
+               endpoint=client.url(environments.RTP_TRATA_PATH)).send()
+```
+
 After `send()`, `http_status`, `http_headers` and `raw_body` on the `Response` and on `ResponseError` hold the HTTP exchange; after `parse_response()` they are `None`.
 
 Transport-agnostic (do your own HTTP):
