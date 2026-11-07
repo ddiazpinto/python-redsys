@@ -30,8 +30,10 @@ from pydantic import (
     model_validator,
 )
 
+from redsys.api import responses
 from redsys.api.currencies import CURRENCIES, CURRENCY_DECIMALS, EUR
 from redsys.api.transactions import TRANSACTION_TYPES
+from redsys.codes import describe
 from redsys.exceptions import UnknownParameterWarning
 
 # 1.x request names that changed or went away in 2.0; the error names the replacement.
@@ -324,18 +326,22 @@ class Response(BaseModel):
 
     @property
     def response_code(self):
-        # A 3DS challenge response may carry no Ds_Response. The code is returned
-        # as-is; see docs/response-codes.md for the English meanings.
+        # A 3DS challenge response may carry no Ds_Response.
         return int(self.response) if self.response not in (None, '') else None
+
+    def describe(self, language='es') -> str:
+        """Meaning of ``Ds_Response``, or of ``Ds_ErrorCode`` without it; see ``redsys.codes.describe``."""
+        code = self.response if self.response not in (None, '') else self.error_code
+        return describe(code, language) if code else ''
 
     def is_paid(self) -> bool:
         return self.response_code is not None and 0 <= self.response_code <= 99
 
     def is_refunded(self) -> bool:
-        return self.response_code == 900
+        return self.response_code == responses.REFUND_OR_CONFIRMATION_AUTHORIZED
 
     def is_canceled(self) -> bool:
-        return self.response_code == 400
+        return self.response_code == responses.CANCELLATION_AUTHORIZED
 
     def is_authorized(self) -> bool:
         return self.is_paid() or self.is_refunded() or self.is_canceled()

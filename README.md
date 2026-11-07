@@ -110,7 +110,7 @@ Response predicates (per the RedSys documentation):
 - `response.is_refunded()`: response code 900.
 - `response.is_authorized()`: paid, refunded or canceled.
 
-`response.response_code` is the raw RedSys code; meanings are listed in [`docs/response-codes.md`](docs/response-codes.md). Decoded fields (`response.order`, `response.amount` as a `Decimal`, ...) read off the model; parameters the library does not list are kept under their wire name in `response.model_extra`.
+`response.response_code` is the raw RedSys code, with names in `redsys.responses`; `response.describe()` gives its meaning in Spanish, `response.describe("en")` in English, and `redsys.codes.describe(code)` does the same for any `Ds_Response`, `SISnnnn` or Bizum `BIZnnnnn` code ([`docs/response-codes.md`](docs/response-codes.md)). Decoded fields (`response.order`, `response.amount` as a `Decimal`, ...) read off the model; parameters the library does not list are kept under their wire name in `response.model_extra`.
 
 ## Using *direct connection* (REST)
 
@@ -217,7 +217,7 @@ client.payment(
 
 ## Reference
 
-- [`docs/response-codes.md`](docs/response-codes.md): response-code meanings.
+- [`docs/response-codes.md`](docs/response-codes.md): response, SIS and Bizum code meanings.
 - [`docs/redirect-connection.md`](docs/redirect-connection.md) / [`docs/direct-connection.md`](docs/direct-connection.md): connection-type protocol reference.
 - [`docs/official-libraries.md`](docs/official-libraries.md): equivalences for PHP and Java integrators.
 

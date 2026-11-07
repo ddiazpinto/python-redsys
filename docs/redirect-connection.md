@@ -135,7 +135,7 @@ RedSys returns the result with the same three-field envelope (`Ds_SignatureVersi
 | `>= 0101` (other) | Declined or error; specific code identifies the reason (expired card, CVV, fraud, etc.). |
 | `SIS0xxx` / `9xxx` in `Ds_ErrorCode` | Input/processing errors (bad signature, missing field, decode failure). |
 
-The library returns the raw `Ds_Response` code (`Response.response_code`) and does not translate it; English meanings are documented in `docs/response-codes.md`. Helper predicates: `is_paid()` = `0 <= code <= 99`; `is_refunded()` = `code == 900`; `is_canceled()` = `code == 400`; `is_authorized()` = any of those.
+The library returns the raw `Ds_Response` code (`Response.response_code`); `Response.describe()` and `redsys.codes.describe()` give its meaning in Spanish or English, listed in `docs/response-codes.md`. Helper predicates: `is_paid()` = `0 <= code <= 99`; `is_refunded()` = `code == 900`; `is_canceled()` = `code == 400`; `is_authorized()` = any of those.
 
 ## Transaction types
 
