@@ -90,7 +90,7 @@ Same `Ds_Response` semantics as redirect: `0000`-`0099` authorized, `0900` refun
 
 ## Transaction types
 
-Same code table as the redirect reference (0 authorization, 1 preauthorization, 2 confirmation, 3 refund, 9 cancellation, plus recurring, PUCE, PayGold, token-management, and 48h-cancellation codes).
+Same code table as the redirect reference (0 authorization, 1 preauthorization, 2 confirmation, 3 refund, 9 preauthorization void, plus recurring, PUCE, PayGold, token-management, and 48h-cancellation codes).
 
 ## Test environment
 

@@ -16,8 +16,11 @@ AUTHENTICATION = 7
 AUTHENTICATION_CONFIRMATION = 8
 """Authentication confirmation"""
 
-CANCELLATION = 9
-"""Cancellation"""
+VOID = 9
+"""Void of a preauthorization ("Anulación de preautorización")."""
+
+CANCELLATION = VOID
+"""Former name of ``VOID``."""
 
 REPLACEMENT_PREAUTHORIZATION = 11
 """Replacement preauthorization: extends an existing preauthorization."""
@@ -41,7 +44,7 @@ DELETE_REFERENCE = 44
 """Delete a stored card reference (token)."""
 
 PAYMENT_CANCELLATION = 45
-"""Payment cancellation, for merchant time-outs or technical errors."""
+"""Payment cancellation ("Anulación de pago"), for merchant time-outs or technical errors."""
 
 REFUND_CANCELLATION = 46
 """Refund cancellation, within 48 hours of the refund."""
@@ -59,7 +62,7 @@ TRANSACTION_TYPES = (
     REFUND,
     AUTHENTICATION,
     AUTHENTICATION_CONFIRMATION,
-    CANCELLATION,
+    VOID,
     REPLACEMENT_PREAUTHORIZATION,
     PAY_GOLD,
     AUTHENTICATION_PUCE,

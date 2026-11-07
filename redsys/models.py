@@ -216,7 +216,7 @@ class RefundMessage(BaseRequest):
 
 
 class CancellationMessage(BaseRequest):
-    """Cancellation of a preauthorization (transaction type 9)."""
+    """Void of a preauthorization (transaction type 9) or another cancellation (types 45 to 47)."""
 
     transaction_type: int = Field(9, alias='Ds_Merchant_TransactionType')
 
