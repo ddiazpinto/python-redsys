@@ -30,17 +30,16 @@ from pydantic import (
     model_validator,
 )
 
-from redsys.api import responses
+from redsys.api import options, responses
 from redsys.api.currencies import CURRENCIES, CURRENCY_DECIMALS, EUR
 from redsys.api.transactions import TRANSACTION_TYPES
 from redsys.codes import describe
 from redsys.exceptions import UnknownParameterWarning
 
-# 1.x request names that changed or went away in 2.0; the error names the replacement.
-_LEGACY_FIELDS: dict[str, str | None] = {
+# 1.x request names that changed in 2.0; the error names the replacement.
+_LEGACY_FIELDS: dict[str, str] = {
     'payment_method': 'pay_methods',
     'mobile_number': 'bizum_mobile_number',
-    'transaction_date': None,
 }
 
 
@@ -93,9 +92,7 @@ class BaseRequest(BaseModel):
             if key in known:
                 continue
             if key in _LEGACY_FIELDS:
-                replacement = _LEGACY_FIELDS[key]
-                hint = f'use {replacement!r}' if replacement else 'it has no 2.x equivalent'
-                raise ValueError(f'{key!r} is a 1.x field name; {hint}.')
+                raise ValueError(f'{key!r} is a 1.x field name; use {_LEGACY_FIELDS[key]!r}.')
             if key.lower().startswith('ds_merchant_'):
                 warn(f'{key!r} is not modeled by this library; sent as given.', UnknownParameterWarning, stacklevel=2)
                 continue
@@ -141,9 +138,34 @@ class _StoredCredentialFields(BaseModel):
     cof_ini: str | None = Field(None, alias='Ds_Merchant_Cof_Ini', max_length=1, description='See redsys.api.cof.')
     cof_type: str | None = Field(None, alias='Ds_Merchant_Cof_Type', max_length=1, description='See redsys.api.cof.')
     cof_txnid: str | None = Field(None, alias='Ds_Merchant_Cof_Txnid', max_length=15)
+    group: str | None = Field(
+        None, alias='Ds_Merchant_Group', pattern=r'^[0-9]{1,9}$', description='Group that shares card references.'
+    )
+    email_titular: str | None = Field(
+        None, alias='Ds_Merchant_Email_Titular', max_length=100, description='Cardholder e-mail; gets a summary.'
+    )
 
 
-class _RedirectFields(_StoredCredentialFields):
+class _CardFields(BaseModel):
+    """Card data, inSite token and 3-D Secure data, accepted by both connections."""
+
+    pan: str | None = Field(None, alias='Ds_Merchant_Pan', max_length=19, pattern=r'^[0-9]{12,19}$')
+    expiry_date: str | None = Field(None, alias='Ds_Merchant_ExpiryDate', pattern=r'^[0-9]{4}$', description='YYMM.')
+    cvv2: str | None = Field(None, alias='Ds_Merchant_Cvv2', pattern=r'^[0-9]{3,4}$')
+    idoper: str | None = Field(None, alias='Ds_Merchant_Idoper', max_length=40, description='inSite operation token.')
+    emv3ds: dict[str, Any] | None = Field(None, alias='Ds_Merchant_EMV3DS', description='Build with redsys.threeds.')
+
+
+class _DirectOperationFields(BaseModel):
+    """Fields of every direct-connection operation."""
+
+    merchant_descriptor: str | None = Field(
+        None, alias='Ds_Merchant_MerchantDescriptor', max_length=25, description='Soft descriptor; bank activation.'
+    )
+    client_ip: str | None = Field(None, alias='Ds_Merchant_ClientIP', max_length=15, description='Customer IP.')
+
+
+class _RedirectFields(_StoredCredentialFields, _CardFields):
     """Fields of the redirect connection (browser form)."""
 
     merchant_url: str | None = Field(None, alias='Ds_Merchant_MerchantURL', max_length=250)
@@ -161,16 +183,26 @@ class _RedirectFields(_StoredCredentialFields):
         max_length=3,
         description='PSD2 SCA exemption requested; codes in redsys.api.sca.',
     )
+    merchant_descriptor: str | None = Field(
+        None, alias='Ds_Merchant_MerchantDescriptor', max_length=25, description='Soft descriptor; bank activation.'
+    )
+    shipping_address_pyp: str | None = Field(
+        None, alias='Ds_Merchant_ShippingAddressPyP', pattern=r'^[SN]$', description='See redsys.api.options.'
+    )
+    perso_code: int | None = Field(
+        None, alias='Ds_Merchant_PersoCode', ge=0, le=9, description='Payment page personalization.'
+    )
 
 
-class _DirectFields(_StoredCredentialFields):
+class _DirectFields(_StoredCredentialFields, _CardFields, _DirectOperationFields):
     """Fields of the direct connection (server-to-server card data, 3DS, stored credentials)."""
 
-    pan: str | None = Field(None, alias='Ds_Merchant_Pan', max_length=19, pattern=r'^[0-9]{12,19}$')
-    expiry_date: str | None = Field(None, alias='Ds_Merchant_ExpiryDate', pattern=r'^[0-9]{4}$', description='YYMM.')
-    cvv2: str | None = Field(None, alias='Ds_Merchant_Cvv2', pattern=r'^[0-9]{3,4}$')
-    idoper: str | None = Field(None, alias='Ds_Merchant_Idoper', max_length=40, description='inSite operation token.')
-    emv3ds: dict[str, Any] | None = Field(None, alias='Ds_Merchant_EMV3DS', description='Build with redsys.threeds.')
+    mpi_external: dict[str, Any] | None = Field(
+        None, alias='Ds_Merchant_MpiExternal', description='Results of an external 3DS server.'
+    )
+    token_data: dict[str, Any] | None = Field(
+        None, alias='Ds_Merchant_TokenData', description='Network token cryptogram data.'
+    )
     # RedSys spells the wire name "Frecuency".
     date_frequency: str | None = Field(None, alias='Ds_Merchant_DateFrecuency', description='Days between charges.')
     charge_expiry_date: str | None = Field(None, alias='Ds_Merchant_ChargeExpiryDate', description='yyyy-MM-dd.')
@@ -185,8 +217,17 @@ class _DirectFields(_StoredCredentialFields):
     )
 
 
-class RedirectPaymentMessage(BaseRequest, _RedirectFields):
-    """Redirect-connection payment (transaction type 0)."""
+class _PaymentFields(BaseModel):
+    """Fields of payments (type 0) and authentications (type 7) on both connections."""
+
+    tax_reference: str | None = Field(
+        None, alias='Ds_Merchant_Tax_Reference', max_length=100, description='Tax payment barcode; bank activation.'
+    )
+    ota: str | None = Field(None, alias='Ds_Merchant_OTA', pattern=r'^S$', description='See redsys.api.options.')
+
+
+class RedirectPaymentMessage(BaseRequest, _RedirectFields, _PaymentFields):
+    """Redirect-connection payment (transaction type 0), authentication (7) or refund without original (34)."""
 
 
 class RedirectPreauthorizationMessage(BaseRequest, _RedirectFields):
@@ -195,12 +236,34 @@ class RedirectPreauthorizationMessage(BaseRequest, _RedirectFields):
     transaction_type: int = Field(1, alias='Ds_Merchant_TransactionType')
 
 
-class DirectPaymentMessage(BaseRequest, _DirectFields):
-    """Direct-connection card payment (transaction type 0)."""
+class DirectPaymentMessage(BaseRequest, _DirectFields, _PaymentFields):
+    """Direct-connection card payment (transaction type 0), and the types without their own message."""
 
     sum_total: Decimal | None = Field(
         None, alias='Ds_Merchant_SumTotal', description='Recurring series total; scaled like amount.'
     )
+    financing: str | dict[str, Any] | None = Field(
+        None, alias='Ds_Merchant_Financing', description='"Y" on the 3DS initialization; then the chosen option.'
+    )
+    matching_data: str | None = Field(
+        None, alias='Ds_Merchant_MatchingData', max_length=21, description='Unique; type 17, with acquirer_identifier.'
+    )
+    acquirer_identifier: str | None = Field(
+        None, alias='Ds_Acquirer_Identifier', pattern=r'^[0-9]{1,6}$', description='Type 17, with matching_data.'
+    )
+
+    @field_validator('financing')
+    @classmethod
+    def _validate_financing(cls, value):
+        if isinstance(value, str) and value != options.FINANCING_QUERY:
+            raise ValueError('financing is "Y" or the chosen option.')
+        return value
+
+    @model_validator(mode='after')
+    def _matching_data_with_acquirer(self):
+        if (self.matching_data is None) != (self.acquirer_identifier is None):
+            raise ValueError('matching_data and acquirer_identifier go together.')
+        return self
 
     @field_serializer('sum_total')
     def _serialize_sum_total(self, value: Decimal | None) -> int | None:
@@ -213,20 +276,29 @@ class DirectPreauthorizationMessage(BaseRequest, _DirectFields):
     transaction_type: int = Field(1, alias='Ds_Merchant_TransactionType')
 
 
-class ConfirmationMessage(BaseRequest):
+class ConfirmationMessage(BaseRequest, _DirectOperationFields):
     """Capture of a previous preauthorization (transaction type 2)."""
 
     transaction_type: int = Field(2, alias='Ds_Merchant_TransactionType')
 
 
-class RefundMessage(BaseRequest):
+class RefundMessage(BaseRequest, _DirectOperationFields):
     """Refund of a previous payment (transaction type 3)."""
 
     transaction_type: int = Field(3, alias='Ds_Merchant_TransactionType')
     authorization_code: str | None = Field(None, alias='Ds_Merchant_AuthorisationCode', max_length=6)
+    transaction_date: str | None = Field(
+        None,
+        alias='Ds_Merchant_TransactionDate',
+        pattern=r'^[0-9]{4}-[0-9]{2}-[0-9]{2}$',
+        description='yyyy-mm-dd of the original operation.',
+    )
+    rts: str | None = Field(
+        None, alias='Ds_Merchant_RTS', pattern=r'^[0-9]{1,24}$', description='Response.rts of a partial confirmation.'
+    )
 
 
-class CancellationMessage(BaseRequest):
+class CancellationMessage(BaseRequest, _DirectOperationFields):
     """Void of a preauthorization (transaction type 9) or another cancellation (types 45 to 47)."""
 
     transaction_type: int = Field(9, alias='Ds_Merchant_TransactionType')
@@ -282,6 +354,8 @@ class Response(BaseModel):
     bizum_cuenta_truncada: str | None = Field(None, alias='Ds_Bizum_CuentaTruncada')
     currency_dcc: str | None = Field(None, alias='Ds_Currency_DCC', description='Dynamic currency conversion.')
     amount_dcc: str | None = Field(None, alias='Ds_Amount_DCC', description='Minor units in Ds_Currency_DCC.')
+    rts: str | None = Field(None, alias='rts', description='Partial confirmation reference; refund it with rts=.')
+    url_pago_2_fases: str | None = Field(None, alias='Ds_UrlPago2Fases', description='PayGold payment link.')
 
     _http_status: int | None = PrivateAttr(None)
     _http_headers: dict[str, str] | None = PrivateAttr(None)

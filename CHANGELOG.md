@@ -20,6 +20,8 @@ All notable changes to this project. Format follows [Keep a Changelog](https://k
 - `redsys.codes.describe(code, language='es')`: the meaning of a `Ds_Response`, `SISnnnn` or Bizum `BIZnnnnn` code in Spanish or English, chosen by ISO code or RedSys's numeric one; `''` for an unknown code. `Response.describe()` does the same for a response, and `redsys.responses` names the documented `Ds_Response` codes.
 - `redsys.pay_methods`: the `Ds_Merchant_PayMethods` values the guides use (`BIZUM`, `CARD`, `BANK_TRANSFER`, `PAYPAL`, `XPAY`, `GOOGLE_PAY`).
 - `redsys.generate_order(length=12)`: a random order number, 4 digits then letters and digits, valid for `Ds_Merchant_Order`.
+- Parameters of RedSys's input and output table, validated on the operations it allows them: `group`, `merchant_descriptor`, `tax_reference`, `client_ip`, `transaction_date`, `ota`, `financing`, `matching_data` with `acquirer_identifier`, `mpi_external`, `rts`, `token_data`, `shipping_address_pyp`, `perso_code` and `email_titular`; card data, `idoper` and `emv3ds` on the redirect connection too. `redsys.options` names their closed values.
+- `Response.rts` and `Response.url_pago_2_fases` (`Ds_UrlPago2Fases`).
 - `endpoint=` on every operation and `request()`: an HTTPS URL that replaces the client's for that request, never signed. `client.url(path)` joins the environment host and a path, and `redsys.environments` names the Bizum Request-to-Pay paths (`RTP_CHECK_PATH`, `RTP_TRATA_PATH`, `RTP_BACKUP_PATH`, `RTP_BACKUP_VALIDATION_PATH`).
 - `docs/official-libraries.md`: equivalences for PHP and Java integrators.
 
@@ -29,6 +31,7 @@ All notable changes to this project. Format follows [Keep a Changelog](https://k
 - A `Ds_Merchant_TransactionType` that differs from the operation raises `ValidationError`; before, it was signed and sent. On an operation method, a different `transaction_type` raises `ValidationError` instead of `TypeError`.
 - `docs/response-codes.md` lists every documented `Ds_Response` code with its constant and the text `describe()` returns, plus the Bizum codes.
 - `RedirectClient.request()` raises `ValidationError` for a transaction type other than 0, 1, 7 and 34, the ones the redirect connection accepts.
+- `transaction_date` is a refund parameter (`Ds_Merchant_TransactionDate`); it no longer raises as a 1.x name.
 
 ### Deprecated
 
