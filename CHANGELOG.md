@@ -15,6 +15,7 @@ All notable changes to this project. Format follows [Keep a Changelog](https://k
 - Named operations on the direct clients: `authentication()`, `authentication_confirmation()`, `pay_gold()`, `authentication_confirmation_cancellation()` and `partial_confirmation()`.
 - `inicia_payment()`, `inicia_preauthorization()` and `inicia_authentication()`, which default `emv3ds` to `threeds.card_data()`, and `challenge_response()` for the step after a 3DS challenge.
 - `http_status`, `http_headers` and `raw_body` on `Response` and `ResponseError` after `send()`.
+- `docs/official-libraries.md`: equivalences for PHP and Java integrators.
 
 ### Changed
 

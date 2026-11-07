@@ -92,6 +92,8 @@ Same `Ds_Response` semantics as redirect: `0000`-`0099` authorized, `0900` refun
 
 Same code table as the redirect reference (0 authorization, 1 preauthorization, 2 confirmation, 3 refund, 9 preauthorization void, plus recurring, PUCE, PayGold, token-management, and 48h-cancellation codes).
 
+The operations and their methods are listed in [`official-libraries.md`](official-libraries.md).
+
 ## Test environment
 
 Same credentials and cards as the redirect reference, against the `sis-t.redsys.es:25443` REST endpoints. `tests/test_live.py` exercises this flow end to end, including the challenge on RedSys's simulator ACS.
