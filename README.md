@@ -146,7 +146,7 @@ A parameter the library does not model yet can be passed by its wire name (`Ds_M
 
 | | |
 |---|---|
-| Version | 2.2.0; 1.x receives fixes until 2026-12-31 ([migration guide](docs/migration-1x-to-2x.md)) |
+| Version | 2.2.1; 1.x receives fixes until 2026-12-31 ([migration guide](docs/migration-1x-to-2x.md)) |
 | Python | 3.10 to 3.15 |
 | RedSys documents followed | Redirection guide 4.2, REST guide 4.0.1, Bizum guide 2.6, inSite guide 4.1, PayGold guide 1.8.2, Google Pay guide 1.9, Apple Pay guide 3.2, "Parámetros de entrada y salida" page |
 | Verified against the RedSys test environment | Redirect in a browser with the 3DS challenge; direct end to end (frictionless and challenged 3DS, 3DSMethod, refund, void, payment cancellation, stored-card merchant-initiated charge), in all three signature versions |
