@@ -2,6 +2,17 @@
 
 All notable changes to this project. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) with [Semantic Versioning](https://semver.org/).
 
+## [1.2.3] - 2026-11-14
+
+### Security
+
+- `create_response()` verifies the signature before it reads the fields. Before the check it reads at most 128 KiB of `Ds_MerchantParameters` and 128 characters of `Ds_Signature`, and rejects JSON nested deeper than 32 levels. Before, an unsigned payload posted to the notification URL was decoded and read first: deeply nested JSON could exhaust a small thread stack and crash the process (Python 3.12 and 3.13 with a 1 MiB thread stack), and `Ds_Signature` was normalized whatever its length.
+- Signatures are compared in constant time, with `hmac.compare_digest`.
+
+### Fixed
+
+- `create_response()` raises `ValueError` for any malformed payload: a field that is not ASCII text, a `Ds_MerchantParameters` that is not a Base64-encoded JSON object, or a signed field that cannot be read. A missing `Ds_Order`, or one longer than 16 characters, fails the signature check. Before, these raised `TypeError`, `AttributeError`, `RecursionError`, `decimal.InvalidOperation` or a PyCryptodome `ValueError`.
+
 ## [1.2.2] - 2026-10-17
 
 ### Fixed
