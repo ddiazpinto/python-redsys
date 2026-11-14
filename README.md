@@ -63,7 +63,7 @@ RedSys notifies the result both as a server-to-server POST to `merchant_url` and
 
 ### 3. Verify and read the response
 
-`create_response()` takes the received `Ds_Signature` and `Ds_MerchantParameters` and raises `ValueError` on signature mismatch.
+`create_response()` takes the received `Ds_Signature` and `Ds_MerchantParameters`, verifies the signature before it reads any field, and raises `ValueError` on signature mismatch or a malformed payload: a `Ds_Signature` over 128 characters, a `Ds_MerchantParameters` over 128 KiB or that is not a Base64-encoded JSON object nested at most 32 levels, or a signed field that cannot be read.
 
 ```python
 response = client.create_response(signature, merchant_parameters)  # as RedSys posted them back
