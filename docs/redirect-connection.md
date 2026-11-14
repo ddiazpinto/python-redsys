@@ -102,7 +102,7 @@ Response signatures arrive in URL-safe Base64; verification normalizes both side
 
 ## Response
 
-RedSys returns the result in the same three-field envelope, both as a server-to-server POST to `Ds_Merchant_MerchantURL` and through the browser redirect. `client.parse_response(fields)` decodes `Ds_MerchantParameters`, recomputes the signature with the key derived from `Ds_Order`, compares it with `Ds_Signature` and returns a `Response`. A mismatch raises `ValueError`: the fields did not come from RedSys or were altered.
+RedSys returns the result in the same three-field envelope, both as a server-to-server POST to `Ds_Merchant_MerchantURL` and through the browser redirect. `client.parse_response(fields)` decodes `Ds_MerchantParameters`, recomputes the signature with the key derived from `Ds_Order`, compares it with `Ds_Signature` and only then validates the fields into a `Response`. A mismatch raises `ValueError`: the fields did not come from RedSys or were altered. A payload that is not a well-formed result raises `redsys.exceptions.ValidationError`, also a `ValueError`: not a mapping, neither `Ds_MerchantParameters` nor an error code, no `Ds_Signature` or one over 128 characters, an unsupported `Ds_SignatureVersion`, a `Ds_MerchantParameters` over 128 KiB or that is not a Base64-encoded JSON object nested at most 32 levels (all checked before the signature), or a signed field the model rejects. An error code without `Ds_MerchantParameters` raises `ResponseError`; it carries no signature, so it does not prove that RedSys sent it.
 
 ## Response parameters
 

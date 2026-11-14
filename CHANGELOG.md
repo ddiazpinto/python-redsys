@@ -2,6 +2,17 @@
 
 All notable changes to this project. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) with [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Security
+
+- `parse_response()` verifies the signature before it validates the fields. Before the check it reads at most 128 KiB of `Ds_MerchantParameters` and 128 characters of `Ds_Signature`, and rejects JSON nested deeper than 32 levels. Before, an unsigned payload posted to the notification URL reached field validation (an amount such as `1E99999999` raised `decimal.Overflow`), deeply nested JSON could exhaust a small thread stack and crash the process (Python 3.12 and 3.13 with a 1 MiB thread stack), and `Ds_Signature` was normalized whatever its length.
+
+### Fixed
+
+- `parse_response()` raises `redsys.exceptions.ValidationError`, a `ValueError`, for any payload that is not a well-formed RedSys result: not a mapping, neither `Ds_MerchantParameters` nor an error code, no `Ds_Signature`, an unsupported `Ds_SignatureVersion`, a `Ds_MerchantParameters` that is not a Base64-encoded JSON object, or a signed field the model rejects. Before, these raised `KeyError`, `TypeError`, `AttributeError`, `RecursionError`, `decimal.Overflow`, `pydantic.ValidationError` or, for a payload with neither field, a `ResponseError` without a code. A signature mismatch still raises `ValueError`. The received fields may come in any mapping (a `dict` or a framework's form data), as `str`, `bytes` or `bytearray`.
+- `send()` raises `ValidationError` for an answer that is not JSON, instead of `json.JSONDecodeError`.
+
 ## [2.2.0] - 2026-11-07
 
 ### Added

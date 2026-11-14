@@ -15,7 +15,7 @@ class ResponseError(RedsysError):
 
 
 class ValidationError(RedsysError, ValueError):
-    """A client option or an operation's fields contradict each other or what RedSys accepts."""
+    """Rejected input: a client option or operation fields RedSys does not accept, or a malformed received payload."""
 
 
 class UnknownParameterWarning(UserWarning):

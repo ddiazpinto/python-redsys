@@ -20,7 +20,9 @@ dict with ``model_validate``. Field constraints follow these RedSys documents:
 
 from base64 import b64decode, b64encode
 from decimal import Decimal
+from itertools import accumulate
 from json import dumps, loads
+from operator import sub as subtract
 from typing import Any
 from warnings import warn
 
@@ -48,13 +50,35 @@ _LEGACY_FIELDS: dict[str, str] = {
 }
 
 
+# RedSys payloads nest two or three levels; deeper JSON can exhaust a small thread
+# stack inside the C JSON decoder and kill the process.
+_MAX_JSON_DEPTH = 32
+_NOT_BRACKETS = bytes(sorted(set(range(256)) - set(b'[]{}')))
+_BRACKET_WEIGHTS = bytes.maketrans(b'[{]}', b'\x02\x02\x00\x00')
+
+
+def _json_depth_exceeds(text: bytes, limit: int) -> bool:
+    """Whether JSON text nests deeper than ``limit``; brackets inside strings do not count."""
+    if text.count(b'[') + text.count(b'{') <= limit:
+        return False
+    # Bytes operations only: the text may be attacker-sized, and a byte loop costs ten times more.
+    outside_strings = b''.join(text.replace(b'\\\\', b'').replace(b'\\"', b'').split(b'"')[::2])
+    # Opening brackets weigh 2 and closing ones 0: the running sum minus the position is the depth.
+    weights = outside_strings.translate(_BRACKET_WEIGHTS, _NOT_BRACKETS)
+    return max(map(subtract, accumulate(weights), range(1, len(weights) + 1)), default=0) > limit
+
+
 def decode_merchant_parameters(data: bytes) -> dict:
     """Decode a Ds_MerchantParameters string in standard or URL-safe Base64, padded or not.
 
     RedSys mixes the forms by signature version (HMAC_SHA512_V2 responses come unpadded).
+    JSON nested deeper than any RedSys payload raises ``ValueError`` before it is parsed.
     """
     data = data.replace(b'-', b'+').replace(b'_', b'/')
-    return loads(b64decode(data + b'=' * (-len(data) % 4)).decode('utf-8'))
+    text = b64decode(data + b'=' * (-len(data) % 4))
+    if _json_depth_exceeds(text, _MAX_JSON_DEPTH):
+        raise ValueError(f'JSON nests deeper than {_MAX_JSON_DEPTH} levels.')
+    return loads(text.decode('utf-8'))
 
 
 def currency_decimals(currency: int | None) -> int:
@@ -487,12 +511,16 @@ class Response(BaseModel):
     @classmethod
     def _blank_amount_to_none(cls, value):
         # Keep the raw integer minor units here; scaling needs the currency and
-        # is applied in from_merchant_parameters.
+        # is applied in _from_fields.
         return None if value in (None, '') else value
 
     @classmethod
     def from_merchant_parameters(cls, merchant_parameters: bytes) -> 'Response':
-        response = cls.model_validate(decode_merchant_parameters(merchant_parameters))
+        return cls._from_fields(decode_merchant_parameters(merchant_parameters))
+
+    @classmethod
+    def _from_fields(cls, fields: dict) -> 'Response':
+        response = cls.model_validate(fields)
         if response.amount is not None:
             # scaleb keeps the currency's decimals: 100 EUR minor units read as 1.00, not 1.
             response.amount = response.amount.scaleb(-currency_decimals(response.currency))
