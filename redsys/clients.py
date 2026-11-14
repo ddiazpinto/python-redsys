@@ -11,12 +11,15 @@ ends in ``send()``. ``parse_response()`` verifies and parses a received result.
 """
 
 from base64 import b64decode
+from collections.abc import Mapping
 from hmac import compare_digest
 from importlib.metadata import PackageNotFoundError, version
 from logging import getLogger
 from re import fullmatch, sub
 from urllib.parse import urlsplit
 from warnings import warn
+
+from pydantic import ValidationError as PydanticValidationError
 
 from redsys import threeds
 from redsys.api import environments, transactions
@@ -39,6 +42,7 @@ from redsys.models import (
     RedirectPreauthorizationMessage,
     RefundMessage,
     Response,
+    decode_merchant_parameters,
 )
 from redsys.request import (
     MERCHANT_PARAMETERS,
@@ -62,6 +66,12 @@ DEFAULT_MODULE = _default_module()
 
 # Seconds; ``send(timeout=...)`` overrides it.
 DEFAULT_TIMEOUT = 30
+
+# Real payloads take a few KiB; the caps bound the work done before the signature is checked.
+_MAX_MERCHANT_PARAMETERS_LENGTH = 128 * 1024
+_MAX_SIGNATURE_LENGTH = 128
+
+_ORDER_WIRE_NAME = Response.model_fields['order'].alias
 
 __all__ = [
     'Client',
@@ -91,6 +101,19 @@ def _normalize_signature(signature) -> str:
     if isinstance(signature, bytes):
         signature = signature.decode('utf-8')
     return sub(r'[^a-zA-Z0-9]', '', signature)
+
+
+def _base64_text(value, name: str, max_length: int) -> bytes:
+    """A received Base64 field as bytes; Base64 is ASCII, so anything else is malformed."""
+    if isinstance(value, (str, bytes, bytearray)) and len(value) > max_length:
+        raise ValidationError(f'{name} exceeds {max_length} characters.')
+    if isinstance(value, str) and value.isascii():
+        value = value.encode('ascii')
+    elif isinstance(value, bytearray):
+        value = bytes(value)
+    if not isinstance(value, bytes) or not value.isascii():
+        raise ValidationError(f'{name} is missing or is not Base64 text.')
+    return value
 
 
 def _resolve_environment(environment: str | None, sandbox: bool | None) -> str:
@@ -247,27 +270,50 @@ class Client:
         return Request(merchant_parameters, signature, version, sender=sender, endpoint=endpoint)
 
     # == Response parsing ==
-    def parse_response(self, payload: dict) -> Response:
+    def parse_response(self, payload: Mapping) -> Response:
         """Verify the signature and parse a received payload into a ``Response``.
 
         Accepts both the redirect callback form fields and the direct REST JSON
-        body. Raises ``ValueError`` if the signature does not match (the payload
-        is not from RedSys or was tampered with), or ``ResponseError`` if RedSys
-        answered with an error code instead of a signed result.
+        body. Fields are validated only after the signature matches. Raises
+        ``ResponseError`` if RedSys answered with an error code instead of a
+        signed result, ``ValidationError`` if the payload is not a well-formed
+        RedSys result, and ``ValueError`` if the signature does not match (the
+        payload is not from RedSys or was tampered with).
         """
+        if not isinstance(payload, Mapping):
+            raise ValidationError('The payload must be a mapping of the received fields.')
         if MERCHANT_PARAMETERS not in payload:
             error_code = payload.get('errorCode') or payload.get('Ds_ErrorCode')
+            if not error_code:
+                raise ValidationError(f'The payload carries neither {MERCHANT_PARAMETERS} nor an error code.')
             raise ResponseError(error_code, payload)
-        merchant_parameters = payload[MERCHANT_PARAMETERS]
-        if isinstance(merchant_parameters, str):
-            merchant_parameters = merchant_parameters.encode('utf-8')
+        merchant_parameters = _base64_text(
+            payload[MERCHANT_PARAMETERS], MERCHANT_PARAMETERS, _MAX_MERCHANT_PARAMETERS_LENGTH
+        )
+        signature = _base64_text(payload.get(SIGNATURE), SIGNATURE, _MAX_SIGNATURE_LENGTH)
         version = payload.get(SIGNATURE_VERSION, DEFAULT_SIGNATURE_VERSION)
-        response = Response.from_merchant_parameters(merchant_parameters)
+        if version not in SIGNATURE_VERSIONS:
+            raise ValidationError(f'{SIGNATURE_VERSION} is not supported.')
+        try:
+            fields = decode_merchant_parameters(merchant_parameters)
+        except ValueError as error:
+            raise ValidationError(f'{MERCHANT_PARAMETERS} is not a Base64-encoded JSON object: {error}') from error
+        if not isinstance(fields, dict):
+            raise ValidationError(f'{MERCHANT_PARAMETERS} is not a Base64-encoded JSON object.')
         # A signed result always carries Ds_Order; without it, '' makes verification fail.
-        expected = get_signer(self._secret_key, version).sign(response.get_order() or '', merchant_parameters)
-        if not compare_digest(_normalize_signature(payload[SIGNATURE]), _normalize_signature(expected)):
+        order = fields.get(_ORDER_WIRE_NAME)
+        try:
+            expected = get_signer(self._secret_key, version).sign(
+                order if isinstance(order, str) else '', merchant_parameters
+            )
+        except UnicodeEncodeError as error:
+            raise ValidationError(f'{_ORDER_WIRE_NAME} is not valid text.') from error
+        if not compare_digest(_normalize_signature(signature), _normalize_signature(expected)):
             raise ValueError('Signature is not valid.')
-        return response
+        try:
+            return Response._from_fields(fields)
+        except (PydanticValidationError, ArithmeticError) as error:
+            raise ValidationError(f'{MERCHANT_PARAMETERS} holds a field that is not valid.') from error
 
 
 class RedirectClient(Client):
@@ -430,7 +476,11 @@ class _DirectBase(Client):
         http_response.raise_for_status()
         transport = (http_response.status_code, dict(http_response.headers), http_response.text)
         try:
-            response = self.parse_response(http_response.json())
+            body = http_response.json()
+        except ValueError as error:
+            raise ValidationError('The answer is not JSON.') from error
+        try:
+            response = self.parse_response(body)
         except ResponseError as error:
             error.http_status, error.http_headers, error.raw_body = transport
             raise

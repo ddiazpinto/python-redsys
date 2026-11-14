@@ -156,6 +156,7 @@ The answer is verified and parsed like the redirect notification. Besides the fi
 | RedSys answers `errorCode` instead of a signed result | `ResponseError`; `.error_code` holds the `SISnnnn` code, plus `http_status`, `http_headers` and `raw_body` after `send()` |
 | RedSys answers an HTTP error status | `httpx.HTTPStatusError` |
 | The signature of the answer does not match | `ValueError` |
+| The answer is not a well-formed RedSys result, for example not JSON; every case is listed under [Response](redirect-connection.md#response) in the redirect reference | `redsys.exceptions.ValidationError` |
 
 `redsys.codes.describe(error.error_code, "en")` gives the meaning of any `SISnnnn` code; [`response-codes.md`](response-codes.md) lists `Ds_Response` and Bizum codes. Common ones in direct integrations:
 

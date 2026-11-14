@@ -132,6 +132,7 @@ Fields are validated when the operation method is called, before anything is sig
 | A field with the wrong type or format, a missing required field, a misspelled or 1.x field name, an unknown currency or transaction type | `pydantic.ValidationError`; `.errors()` lists each field |
 | A transaction type that contradicts the operation or the redirect connection, a non-HTTPS `endpoint`, an invalid API key or environment | `redsys.exceptions.ValidationError` |
 | A signature that does not match in `parse_response()` | `ValueError` |
+| A payload in `parse_response()` or an answer in `send()` that is not a well-formed RedSys result, for example without a signature or not a Base64-encoded JSON object | `redsys.exceptions.ValidationError` |
 | RedSys answers with an error code instead of a signed result | `redsys.exceptions.ResponseError`; `.error_code` holds the `SISnnnn` code |
 | An HTTP error status from RedSys in `send()` | `httpx.HTTPStatusError` |
 
